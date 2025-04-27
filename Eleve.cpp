@@ -43,40 +43,6 @@ void Player::move(const int nDirection) {
     }
 }
 
-// class Image {
-// private:
-//     int nTextureId;
-//     V2 vImageSize;
-//     V2 vImageAnchor;
-//
-// public:
-//     Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor) {
-//         nTextureId = G2D::ExtractTextureFromPNG(sFilePath, T);
-//         if (nTextureId < 0) {
-//             std::cerr <<"Error loading texture from " <<sFilePath <<std::endl;
-//         }
-//         this->vImageSize = vImageSize;
-//         this->vImageAnchor = vImageAnchor;
-//     }
-//
-//     Image(const std::string& sFilePath, V2 vImageSize, V2 vImageAnchor) :
-//     Image(sFilePath, Transparency::BottomLeft, vImageSize, vImageAnchor) {
-//     }
-//
-//     Image(const std::string& sFilePath, V2 vImageAnchor) :
-//     Image(sFilePath, V2(96, 96), vImageAnchor) {
-//     }
-//
-//     void setSize(const V2& vNewSize) {
-//         vImageSize = vNewSize;
-//     }
-//
-//     void render(const V2& vPos) const {
-//         V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
-//         G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize);
-//     }
-// };
-
 /*----------------------------------------------------------------*/
 void render(const GameData& G)
 {
@@ -219,7 +185,27 @@ int main(int argc, char* argv[])
         nSpeed = std::stod(argv[1]);
     }
 
+
+
     Player P1 = Player(V2(20, 80));
+
+    std::unordered_map<int, Key> keyMap;
+    keyMap[UP] = Key::E;
+    keyMap[LEFT] = Key::S;
+    keyMap[DOWN] = Key::D;
+    keyMap[RIGHT] = Key::F;
+    keyMap[OK] = Key::J;
+    keyMap[NO] = Key::K;
+    P1.setKeys(keyMap);
+
+    // for (std::pair<int, Key> K : P1.keybinds) {
+    //     std::cout <<K.first <<" " <<K.second <<std::endl;
+    // }
+
+
+
+
+
 	GameData G1 = GameData(1, P1);
 	G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("test1"));
 
