@@ -43,6 +43,40 @@ void Player::move(const int nDirection) {
     }
 }
 
+class Image {
+private:
+    int nTextureId;
+    V2 vImageSize;
+    V2 vImageAnchor;
+
+public:
+    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor) {
+        nTextureId = G2D::ExtractTextureFromPNG(sFilePath, T);
+        if (nTextureId < 0) {
+            std::cerr <<"Error loading texture from " <<sFilePath <<std::endl;
+        }
+        this->vImageSize = vImageSize;
+        this->vImageAnchor = vImageAnchor;
+    }
+
+    Image(const std::string& sFile, V2 vImageSize, V2 vImageAnchor) :
+    Image(sFile, Transparency::BottomLeft, vImageSize, vImageAnchor) {
+    }
+
+    Image(const std::string& sFile, V2 vImageAnchor) :
+    Image(sFile, V2(96, 96), vImageAnchor) {
+    }
+
+    void setSize(const V2& vNewSize) {
+        vImageSize = vNewSize;
+    }
+
+    void render(const V2& vPos) const {
+        V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
+        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize);
+    }
+};
+
 /*----------------------------------------------------------------*/
 void render(const GameData& G)
 {
@@ -59,19 +93,23 @@ void render(const GameData& G)
 
     // G2D::LoadPNG("M/Breeze-Light-Cursor.png", ?, 96, 96);
 
-    V2 vImageCursorSize = V2(96, 96);
+    // V2 vImageCursorSize = V2(96, 96);
     V2 vImageCursorAnchor = V2(12, 12);
-    V2 vImageCursor = vMousePos +V2(0, -vImageCursorSize.y) +V2(-vImageCursorAnchor.x, +vImageCursorAnchor.y);
-    // load texture (the bottom left corner is the transparent color)
-    int nImageCursor = G2D::ExtractTextureFromPNG("M/default2.png", Transparency::BottomLeft);
-    // G2D::drawRectWithTexture(nImageCursorID, G.pPlayer.vPosition, textureSize);
-    G2D::drawRectWithTexture(nImageCursor, vImageCursor, vImageCursorSize);
+    // V2 vImageCursor = vMousePos +V2(0, -vImageCursorSize.y) +V2(-vImageCursorAnchor.x, +vImageCursorAnchor.y);
+    // // load texture (the bottom left corner is the transparent color)
+    // int nImageCursor = G2D::ExtractTextureFromPNG("M/default2.png", Transparency::BottomLeft);
+    // // G2D::drawRectWithTexture(nImageCursorID, G.pPlayer.vPosition, textureSize);
+    // G2D::drawRectWithTexture(nImageCursor, vImageCursor, vImageCursorSize);
+    Image cursor = Image("M/default2.png", vImageCursorAnchor);
+    cursor.render(vMousePos);
 
-    V2 vImagePointerSize = V2(96, 96);
+    // V2 vImagePointerSize = V2(96, 96);
     V2 vImagePointerAnchor = V2(43, 15);
-    V2 vImagePointer = vMousePos +V2(0, -vImagePointerSize.y) +V2(-vImagePointerAnchor.x, +vImagePointerAnchor.y);
-    int nImagePointer = G2D::ExtractTextureFromPNG("M/pointer2.png", Transparency::BottomLeft);
-    G2D::drawRectWithTexture(nImagePointer, vImagePointer, vImagePointerSize);
+    // V2 vImagePointer = vMousePos +V2(0, -vImagePointerSize.y) +V2(-vImagePointerAnchor.x, +vImagePointerAnchor.y);
+    // int nImagePointer = G2D::ExtractTextureFromPNG("M/pointer2.png", Transparency::BottomLeft);
+    // G2D::drawRectWithTexture(nImagePointer, vImagePointer, vImagePointerSize);
+    Image pointer = Image("M/pointer2.png", vImagePointerAnchor);
+    pointer.render(vMousePos);
 
     G2D::setPixel(vMousePos, Color::Red);
 
