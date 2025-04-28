@@ -13,58 +13,11 @@
 #include "G2D.h"
 // #include <map>
 #include <unordered_map>
-/*
-class Image {
-private:
-    int nTextureId;
-    V2 vImageSize;
-    V2 vImageAnchor;
-    float fAngle;
 
-public:
-    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor, float fAngle) {
-        nTextureId = G2D::ExtractTextureFromPNG(sFilePath, T);
-        if (nTextureId <= 0) {
-            std::cerr <<"Image: Error loading texture from " <<sFilePath <<std::endl;
-        }
-        // if (DEBUG) std::cout <<nTextureId <<std::endl;
-        this->vImageSize = vImageSize;
-        this->vImageAnchor = vImageAnchor;
-        this->fAngle = fAngle;
-    }
-
-    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor) :
-    Image(sFilePath, T, vImageSize, vImageAnchor, 0) {
-    }
-
-    Image(const std::string& sFilePath, V2 vImageSize, V2 vImageAnchor) :
-    Image(sFilePath, Transparency::BottomLeft, vImageSize, vImageAnchor) {
-    }
-
-    Image(const std::string& sFilePath, V2 vImageAnchor) :
-    Image(sFilePath, V2(96, 96), vImageAnchor) {
-    }
-
-    void setSize(const V2& vNewSize) {
-        vImageSize = vNewSize;
-    }
-
-    void addAngle(const float fAddAngle) {
-        this->fAngle += fAddAngle;
-    }
-
-    void render(const V2& vPos) const {
-        V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
-        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
-    }
-
-};
-*/
 class Image2 {
 private:
     std::string sFilePath;
     Transparency T;
-    // int nTextureIdAttribute;
     V2 vImageSize;  // None, BottomLeft, BottomRight, UpperLeft, UpperRight
     V2 vImageAnchor;
     float fAngle;
@@ -77,17 +30,7 @@ public:
            float alpha = 0.0f) :
         sFilePath(sPath), vImageAnchor(vAnchor), T(T), vImageSize(vSize), fAngle(alpha) {
 
-            // this->nTextureIdAttribute = loadId();
     }
-
-    // int loadId() {
-    //     int nId = G2D::ExtractTextureFromPNG(this->sFilePath, this->T);
-    //     if (nId <= 0) {
-    //         if (DEBUG) std::cout <<nId <<std::endl;
-    //         std::cerr <<"Image: Error loading texture from " <<sFilePath <<std::endl;
-    //     } // if
-    //     return nId;
-    // }
 
     void setSize(const V2& vNewSize) {
         vImageSize = vNewSize;
@@ -111,7 +54,6 @@ public:
     }
 
 };
-
 
 class Cursor {
 private:
