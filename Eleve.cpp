@@ -13,21 +13,28 @@
 #include "G2D.h"
 // #include <map>
 #include <unordered_map>
-
+/*
 class Image {
 private:
     int nTextureId;
     V2 vImageSize;
     V2 vImageAnchor;
+    float fAngle;
 
 public:
-    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor) {
+    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor, float fAngle) {
         nTextureId = G2D::ExtractTextureFromPNG(sFilePath, T);
-        if (nTextureId < 0) {
+        if (nTextureId <= 0) {
             std::cerr <<"Image: Error loading texture from " <<sFilePath <<std::endl;
         }
+        // if (DEBUG) std::cout <<nTextureId <<std::endl;
         this->vImageSize = vImageSize;
         this->vImageAnchor = vImageAnchor;
+        this->fAngle = fAngle;
+    }
+
+    Image(const std::string& sFilePath, Transparency T, V2 vImageSize, V2 vImageAnchor) :
+    Image(sFilePath, T, vImageSize, vImageAnchor, 0) {
     }
 
     Image(const std::string& sFilePath, V2 vImageSize, V2 vImageAnchor) :
@@ -42,20 +49,83 @@ public:
         vImageSize = vNewSize;
     }
 
+    void addAngle(const float fAddAngle) {
+        this->fAngle += fAddAngle;
+    }
+
     void render(const V2& vPos) const {
         V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
-        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize);
-        // G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, 40);
+        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
     }
+
 };
+*/
+class Image2 {
+private:
+    std::string sFilePath;
+    Transparency T;
+    // int nTextureIdAttribute;
+    V2 vImageSize;  // None, BottomLeft, BottomRight, UpperLeft, UpperRight
+    V2 vImageAnchor;
+    float fAngle;
+
+public:
+    Image2(const std::string& sPath,
+           V2 vAnchor,
+           Transparency T = Transparency::BottomLeft,
+           V2 vSize = V2(96, 96),
+           float alpha = 0.0f) :
+        sFilePath(sPath), vImageAnchor(vAnchor), T(T), vImageSize(vSize), fAngle(alpha) {
+
+            // this->nTextureIdAttribute = loadId();
+    }
+
+    // int loadId() {
+    //     int nId = G2D::ExtractTextureFromPNG(this->sFilePath, this->T);
+    //     if (nId <= 0) {
+    //         if (DEBUG) std::cout <<nId <<std::endl;
+    //         std::cerr <<"Image: Error loading texture from " <<sFilePath <<std::endl;
+    //     } // if
+    //     return nId;
+    // }
+
+    void setSize(const V2& vNewSize) {
+        vImageSize = vNewSize;
+    }
+
+    void addAngle(const float fAddAngle) {
+        this->fAngle += fAddAngle;
+    }
+
+    void render(const V2& vPos) const {
+        int nTextureId;
+        nTextureId = G2D::ExtractTextureFromPNG(this->sFilePath, this->T);
+        if (nTextureId <= 0) {
+            if (DEBUG) std::cout <<nTextureId <<std::endl;
+            std::cerr <<"Image: Error loading texture from " <<sFilePath <<std::endl;
+        } // if
+
+        V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
+
+        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
+    }
+
+};
+
 
 class Cursor {
 private:
-    Image cursorImage, pointerImage;
+    Image2 cursorImage, pointerImage;
 
 public:
-    Cursor(const std::string& cursorPath, const std::string& pointerPath, V2 cursorAnchor, V2 pointerAnchor)
-        : cursorImage(cursorPath, cursorAnchor), pointerImage(pointerPath, pointerAnchor) {
+    Cursor(const std::string& cursorPath, const std::string& pointerPath,
+           V2 cursorAnchor, V2 pointerAnchor)
+    : cursorImage(cursorPath, cursorAnchor), pointerImage(pointerPath, pointerAnchor) {
+    }
+
+    void addAngle(const float fAddAngle) {
+        cursorImage.addAngle(fAddAngle);
+        pointerImage.addAngle(fAddAngle);
     }
 
     void renderPosition(const V2& vPosition, const V2& vCoordinates, bool bSelectCondition) const {
@@ -176,22 +246,28 @@ public:
 // ON TOP
 // struct GameData
 class GameData {
-public:
+private:
     int nID;
+
+public:
     int nFrame;
     int nWidth, nHeight;
     int nScore;
     Player pPlayer;
     Grid gGrid;
+    std::vector<Cursor> lCursors;
 
     GameData(const int nID, Player pPlayer, Grid gGrid)
-        // : nID(nID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), pPlayer(pPlayer) {
-        : nID(nID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), pPlayer(pPlayer), gGrid(gGrid) {
+    // : nID(nID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), pPlayer(pPlayer) {
+    : nID(nID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), pPlayer(pPlayer), gGrid(gGrid) {
         // constructor body (if needed)
     }
 
     void /*GameData::*/function1(const int nValue);
 
+    void addCursor(Cursor C) {
+        this->lCursors.push_back(C);
+    }
 };
 
 void render(const GameData& G);
@@ -227,7 +303,7 @@ void Player::move(const int nDirection) {
 /*----------------------------------------------------------------*/
 void render(const GameData& G)
 {
-	if ( G2D::isOnPause() ) {
+    if ( G2D::isOnPause() ) {
         G2D::clearScreen(Color::Black);
 
         G2D::drawStringFontMono(V2(100+4, (G.nHeight/2)-4),
@@ -249,15 +325,14 @@ void render(const GameData& G)
     G2D::getMousePos(x, y);
     V2 vMousePos = V2(x, y);
 
-    Cursor cursorA("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
-    Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
+    // Cursor cursorA("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
+    // Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
-    cursorA.render(vMousePos, G2D::isMouseLeftButtonPressed());
-    cursorA.renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
+    G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
+    G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
-    cursorB.render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-    cursorB.renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-
+    G.lCursors[1].render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    G.lCursors[1].renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
 
 
 
@@ -273,7 +348,7 @@ void render(const GameData& G)
     G2D::drawStringFontMono(V2(80 +4, G.nHeight -70 -4), std::string("test"), 50, 5, ColorFrom255(178, 178, 178));
     G2D::drawStringFontMono(V2(80, G.nHeight - 70), std::string("test"), 50, 5, Color::Black);
 
-	G2D::Show();
+    G2D::Show();
 }
 
 
@@ -288,30 +363,12 @@ void Logic(GameData& G)
     }
 
     if (G2D::isKeyPressed(Key::A)) {
-		G.GameData::function1(70);
-	}
-	if (G2D::keyHasBeenHit(Key::C)) {
+        G.GameData::function1(70);
+    }
+    if (G2D::keyHasBeenHit(Key::B)) {
         G.GameData::function1(55);
     }
 
-    // if (G2D::isKeyPressed(Key::E)) {
-    //     G.pPlayer.move(0);
-    // }
-//     std::map<int, Key> keyMap;
-//
-//     for (size_t i = 0; i < ESDF.size(); ++i) {
-//         keyMap[i] = ESDF[i]; // Use the index as the key
-//     }
-    // std::map<int, Key> keyMap;
-//     keyMap.insert({0, Key::E});
-//     keyMap.insert({3, Key::S});
-//     keyMap.insert({1, Key::D});
-//     keyMap.insert({2, Key::F});
-
-    // keyMap.insert({UP, Key::E});
-    // keyMap.insert({LEFT, Key::S});
-    // keyMap.insert({DOWN, Key::D});
-    // keyMap.insert({RIGHT, Key::F});
     std::unordered_map<int, Key> keyMap;
     keyMap[UP] = Key::E;
     keyMap[LEFT] = Key::S;
@@ -323,6 +380,11 @@ void Logic(GameData& G)
             G.pPlayer.move(P.first);
         }
     }
+
+    if (G2D::isKeyPressed(Key::Z)) {
+        G.lCursors[0].addAngle(1);
+    }
+
 
     // G.gGrid.placePuyo(2, 5, 'R');
     // G.gGrid.placePuyo(3, 5, 'G');
@@ -342,13 +404,13 @@ void Logic(GameData& G)
 //        Démarrage de l'application
 int main(int argc, char* argv[])
 {
-	double nSpeed;
-	if (argc < 1 || argc > 2) {
-		std::cout <<"What. \n";
-		return 1;
-	} else if (argc == 1) {
-		nSpeed = 1;
-	} else {
+    double nSpeed;
+    if (argc < 1 || argc > 2) {
+        std::cout <<"What. \n";
+        return 1;
+    } else if (argc == 1) {
+        nSpeed = 1;
+    } else {
         // nSpeed = atoi(argv[1]);
         // nSpeed = std::stoi(argv[1]);
         int argv1 = std::stod(argv[1]);
@@ -385,14 +447,23 @@ int main(int argc, char* argv[])
 
 
 
-	GameData G1 = GameData(1, P1, grid001);
-	G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("test1"));
+    GameData G1 = GameData(1, P1, grid001);
 
-	int callToLogicPerSec = 240*nSpeed;
-    if (DEBUG) std::cout <<(int)callToLogicPerSec <<" \n";
-	G2D::Run(Logic, render, G1, callToLogicPerSec, true);
+    Cursor cursorA = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
+    Cursor cursorB = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
-	std::cout <<"\n";
-	return 0;
+    G1.addCursor(cursorA);
+    G1.addCursor(cursorB);
+    // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
+    // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
+
+    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("test1"));
+
+    int callToLogicPerSec = 240*nSpeed;
+    if (DEBUG) std::cout <<"callToLogicPerSec: " <<callToLogicPerSec <<" \n";
+    G2D::Run(Logic, render, G1, callToLogicPerSec, true);
+
+    std::cout <<"\n";
+    return 0;
 }
 
