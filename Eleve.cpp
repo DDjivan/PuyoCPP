@@ -13,12 +13,13 @@
 #include "G2D.h"
 // #include <map>
 #include <unordered_map>
+#include <cmath>  // M_PI
 
 class Image2 {
 private:
     std::string sFilePath;
     Transparency T;
-    V2 vImageSize;  // None, BottomLeft, BottomRight, UpperLeft, UpperRight
+    V2 vImageSize;  // Transparency:: None, BottomLeft, BottomRight, UpperLeft, UpperRight
     V2 vImageAnchor;
     float fAngle;
 
@@ -36,8 +37,12 @@ public:
         vImageSize = vNewSize;
     }
 
-    void addAngle(const float fAddAngle) {
-        this->fAngle += fAddAngle;
+    void addAngleDeg(const float fAngleToAdd) {
+        this->fAngle += fAngleToAdd;
+    }
+
+    void addAngleRad(const float fAngleToAdd) {
+        this->addAngleDeg(fAngleToAdd*(180.0f/M_PI));
     }
 
     void render(const V2& vPos) const {
@@ -50,9 +55,13 @@ public:
 
         V2 vImagePos = vPos +V2(0, -vImageSize.y) +V2(-vImageAnchor.x, +vImageAnchor.y);
 
-        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
-    }
+        // V2 vImagePos = vPos;
+        V2 vNewPos= vPos -vImageSize/2;;
 
+        G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
+        // G2D::drawRectWithTexture(nTextureId, vNewPos, vImageSize, fAngle);
+        G2D::setPixel(vNewPos, Color::Blue);
+    }
 };
 
 class Cursor {
@@ -61,13 +70,20 @@ private:
 
 public:
     Cursor(const std::string& cursorPath, const std::string& pointerPath,
-           V2 cursorAnchor, V2 pointerAnchor)
-    : cursorImage(cursorPath, cursorAnchor), pointerImage(pointerPath, pointerAnchor) {
+           V2 cursorAnchor, V2 pointerAnchor) :
+        // cursorImage(cursorPath, cursorAnchor/*, Transparency::None*/), pointerImage(pointerPath, pointerAnchor/*, Transparency::None*/) {
+        cursorImage(cursorPath, cursorAnchor), pointerImage(pointerPath, pointerAnchor) {
+        // cursorImage(cursorPath, cursorAnchor, Transparency::None), pointerImage(pointerPath, pointerAnchor, Transparency::None) {
+
     }
 
-    void addAngle(const float fAddAngle) {
-        cursorImage.addAngle(fAddAngle);
-        pointerImage.addAngle(fAddAngle);
+    void addAngleDeg(const float fAngleToAdd) {
+        cursorImage.addAngleDeg(fAngleToAdd);
+        pointerImage.addAngleDeg(fAngleToAdd);
+    }
+
+    void addAngleRad(const float fAngleToAdd) {
+        this->addAngleDeg(fAngleToAdd*(180.0f/M_PI));
     }
 
     void renderPosition(const V2& vPosition, const V2& vCoordinates, bool bSelectCondition) const {
@@ -77,16 +93,14 @@ public:
     }
 
     void render(const V2& vPosition, bool bSelectCondition) const {
-        if (DEBUG) G2D::setPixel(vPosition, Color::Red);
-
         if (bSelectCondition) {
             pointerImage.render(vPosition);
         } else {
             cursorImage.render(vPosition);
         }
+        if (DEBUG) G2D::setPixel(vPosition, Color::Red);
     }
 };
-
 
 class Grid {
 private:
@@ -270,15 +284,6 @@ void render(const GameData& G)
     // Cursor cursorA("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
     // Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
-    G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
-    G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
-
-    G.lCursors[1].render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-    G.lCursors[1].renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-
-
-
-
 
     G.gGrid.G2DDisplay();
 
@@ -289,6 +294,20 @@ void render(const GameData& G)
 
     G2D::drawStringFontMono(V2(80 +4, G.nHeight -70 -4), std::string("test"), 50, 5, ColorFrom255(178, 178, 178));
     G2D::drawStringFontMono(V2(80, G.nHeight - 70), std::string("test"), 50, 5, Color::Black);
+
+
+
+
+    G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
+    G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
+
+    G.lCursors[1].render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    G.lCursors[1].renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+
+
+
+
+
 
     G2D::Show();
 }
@@ -324,7 +343,10 @@ void Logic(GameData& G)
     }
 
     if (G2D::isKeyPressed(Key::Z)) {
-        G.lCursors[0].addAngle(1);
+        G.lCursors[0].addAngleRad(M_PI/180.0f);
+    }
+    if (G2D::isKeyPressed(Key::R)) {
+        G.lCursors[0].addAngleDeg(-1);
     }
 
 
