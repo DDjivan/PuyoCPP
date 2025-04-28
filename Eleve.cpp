@@ -49,6 +49,32 @@ public:
     }
 };
 
+class Cursor {
+private:
+    Image cursorImage, pointerImage;
+
+public:
+    Cursor(const std::string& cursorPath, const std::string& pointerPath, V2 cursorAnchor, V2 pointerAnchor)
+        : cursorImage(cursorPath, cursorAnchor), pointerImage(pointerPath, pointerAnchor) {
+    }
+
+    void renderPosition(const V2& vPosition, const V2& vCoordinates, bool bSelectCondition) const {
+        G2D::drawStringFontMono(vPosition,
+                                std::string(vCoordinates), 16, 2,
+                                bSelectCondition ? Color::Red : Color::Black);
+    }
+
+    void render(const V2& vPosition, bool bSelectCondition) const {
+        if (DEBUG) G2D::setPixel(vPosition, Color::Red);
+
+        if (bSelectCondition) {
+            pointerImage.render(vPosition);
+        } else {
+            cursorImage.render(vPosition);
+        }
+    }
+};
+
 
 class Grid {
 private:
@@ -223,45 +249,14 @@ void render(const GameData& G)
     G2D::getMousePos(x, y);
     V2 vMousePos = V2(x, y);
 
+    Cursor cursorA("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
+    Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
+    cursorA.render(vMousePos, G2D::isMouseLeftButtonPressed());
+    cursorA.renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
-    // V2 vImageSize = V2(96, 96);
-    V2 vImageCursorAnchor = V2(12, 12);
-    Image cursor = Image("M/default2.png", vImageCursorAnchor);
-    // cursor.render(vMousePos);
-
-    V2 vImagePointerAnchor = V2(43, 15);
-    Image pointer = Image("M/pointer2.png", vImagePointerAnchor);
-    // pointer.render(vMousePos);
-
-    Color cIsLMB;
-
-    if (G2D::isMouseLeftButtonPressed()) {
-        pointer.render(vMousePos);
-        cIsLMB = Color::Red;
-    } else {
-        cursor.render(vMousePos);
-        cIsLMB = Color::Black;
-    } // if
-    G2D::drawStringFontMono(V2(0, 10), std::string(vMousePos), 16, 2, cIsLMB);
-    G2D::setPixel(vMousePos, Color::Red);
-
-
-
-    // G2D::drawCircle(G.pPlayer.vPosition, 10, G.pPlayer.cColor, true);
-    Image cursor_B = Image("M/default2.png", vImageCursorAnchor);
-    Image pointer_B = Image("M/pointer2.png", vImagePointerAnchor);
-    Color cIsSPACE;
-    if (G2D::isKeyPressed(Key::SPACE)) {
-        pointer_B.render(G.pPlayer.vPosition);
-        cIsSPACE = Color::Red;
-    } else {
-        cursor_B.render(G.pPlayer.vPosition);
-        cIsSPACE = Color::Black;
-    } // if
-    G2D::drawStringFontMono(V2(0, 30), std::string(G.pPlayer.vPosition), 16, 2, cIsSPACE);
-    G2D::setPixel(G.pPlayer.vPosition, Color::Red);
-
+    cursorB.render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    cursorB.renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
 
 
 
@@ -329,13 +324,14 @@ void Logic(GameData& G)
         }
     }
 
-    G.gGrid.placePuyo(2, 5, 'R');
-    G.gGrid.placePuyo(3, 5, 'G');
-    G.gGrid.placePuyo(2, 6, 'R');
+    // G.gGrid.placePuyo(2, 5, 'R');
+    // G.gGrid.placePuyo(3, 5, 'G');
+    // G.gGrid.placePuyo(2, 6, 'R');
     // G.gGrid.G2DDisplay();
 
     // G.gGrid.vPosition = G.gGrid.vPosition + V2(1, 0);
-    G.gGrid.moveGrid(V2(1, 0));
+    // G.gGrid.moveGrid(V2(1, 0));
+
 
 
     G.nFrame += 1;
