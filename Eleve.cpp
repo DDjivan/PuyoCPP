@@ -168,8 +168,6 @@ public:
     }
 };
 
-
-
 enum /*class*/ Direction {
     UP = 0,
     DOWN = 1,
@@ -190,13 +188,36 @@ public:
         // this->cColor = ColorFromHex(0xF43B9A);
     }
 
-    void move(const int nDirection);
+    // void move(const int nDirection)
+    void /*Player::*/move(const int nDirection) {
+        switch (static_cast<Direction>(nDirection)) {
+            case Direction::UP:
+                this->vPosition = this->vPosition + V2(0, 1);
+                break;
+            case Direction::DOWN:
+                this->vPosition = this->vPosition + V2(0, -1);
+                break;
+            case Direction::RIGHT:
+                this->vPosition = this->vPosition + V2(1, 0);
+                break;
+            case Direction::LEFT:
+                this->vPosition = this->vPosition + V2(-1, 0);
+                break;
+        }
+    }
 
     void setKeys(std::unordered_map<int, Key> keyMap) {
         for (std::pair<int, Key> K : keyMap) {
             keybinds[K.first] = K.second;
         }
     }
+};
+
+class Screen {
+private:
+    std::vector<Grid> lGrids;
+public:
+
 };
 
 // ON TOP
@@ -209,17 +230,15 @@ public:
     int nFrame;
     int nWidth, nHeight;
     int nScore;
-    Player pPlayer;
-    Grid gGrid;
+    Player xPlayer;
     std::vector<Cursor> lCursors;
 
-    GameData(const int nID, Player pPlayer, Grid gGrid)
-    // : nID(nID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), pPlayer(pPlayer) {
-    : nID(nID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), pPlayer(pPlayer), gGrid(gGrid) {
-        // constructor body (if needed)
+    GameData(const int ID, Player P)
+    // : nID(ID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), xPlayer(P) {
+    : nID(ID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), xPlayer(P) {
     }
 
-    void /*GameData::*/function1(const int nValue);
+    void function1(const int nValue);
 
     void addCursor(Cursor C) {
         this->lCursors.push_back(C);
@@ -237,23 +256,6 @@ void Logic(GameData& G);
 /*----------------------------------------------------------------*/
 void GameData::function1(const int nValue) {
     std::cout <<"GameData" <<nID <<": function1(" <<nValue <<") speaking here." <<" \n";
-}
-
-void Player::move(const int nDirection) {
-    switch (static_cast<Direction>(nDirection)) {
-        case Direction::UP:
-            this->vPosition = this->vPosition + V2(0, 1);
-            break;
-        case Direction::DOWN:
-            this->vPosition = this->vPosition + V2(0, -1);
-            break;
-        case Direction::RIGHT:
-            this->vPosition = this->vPosition + V2(1, 0);
-            break;
-        case Direction::LEFT:
-            this->vPosition = this->vPosition + V2(-1, 0);
-            break;
-    }
 }
 
 /*----------------------------------------------------------------*/
@@ -285,7 +287,7 @@ void render(const GameData& G)
     // Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
 
-    G.gGrid.G2DDisplay();
+    // G.gGrid.G2DDisplay();
 
 
 
@@ -301,8 +303,8 @@ void render(const GameData& G)
     G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
     G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
-    G.lCursors[1].render(G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-    G.lCursors[1].renderPosition(V2(0, 20), G.pPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    G.lCursors[1].render(G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    G.lCursors[1].renderPosition(V2(0, 20), G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
 
 
 
@@ -338,7 +340,7 @@ void Logic(GameData& G)
 
     for (std::pair<int, Key> P : keyMap) {
         if (G2D::isKeyPressed(P.second)) {
-            G.pPlayer.move(P.first);
+            G.xPlayer.move(P.first);
         }
     }
 
@@ -396,22 +398,9 @@ int main(int argc, char* argv[])
     keyMap[NO] = Key::K;
     P1.setKeys(keyMap);
 
-    // for (std::pair<int, Key> K : P1.keybinds) {
-    //     std::cout <<K.first <<" " <<K.second <<std::endl;
-    // }
-
-
-    //EXAMPLE
     Grid grid001(V2(110, 140));
-    // grid001.placePuyo(2, 5, 'R');
-    // grid001.placePuyo(3, 5, 'G');
-    // grid001.placePuyo(2, 6, 'R');
-    // grid001.coutDisplay();
 
-
-
-
-    GameData G1 = GameData(1, P1, grid001);
+    GameData G1 = GameData(1, P1);
 
     Cursor cursorA = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
     Cursor cursorB = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));

@@ -16,7 +16,17 @@ struct V2
 	/// NEW ///
 	operator std::string() const {
 		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
-	} /// NEW ///
+	}
+
+	bool isInside(const V2 vRectStart, const V2 vRectSize) const {
+		return (
+			x >= vRectStart.x
+			&& x <= vRectStart.x + vRectSize.x
+			&& y >= vRectStart.y
+			&& y <= vRectStart.y + vRectSize.y
+		);
+	}
+	/// NEW ///
 };
 
 // comparaison sur des flottants... traitement spécial
