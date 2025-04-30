@@ -106,14 +106,14 @@ class Grid {
 private:
     const int nWidth = 6;
     const int nHeight = 12;
-    std::vector<std::vector<char>> llGrid;
+    std::vector<std::vector<char>> llChar;
     V2 vPosition;
     const int nSize = 20;
 
 public:
     Grid(V2 vPosition) :
     vPosition(vPosition) {
-        llGrid.resize(nHeight, std::vector<char>(nWidth, '.'));
+        llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
     }
 
     void moveGrid(V2 vDirection) {
@@ -124,11 +124,11 @@ public:
         if (x < 0 || x >= this->nWidth || y < 0 || y >= this->nHeight) {
             if (DEBUG) std::cout <<"Grid.placePuyo: OOB position: " <<x <<',' <<y <<std::endl;
             return false;
-        } else if (llGrid[y][x] != '.') {
+        } else if (llChar[y][x] != '.') {
             if (DEBUG) std::cout <<"Grid.placePuyo: Occupied position: " <<x <<',' <<y <<std::endl;
             return false;
         }
-        llGrid[y][x] = color; // Place the Puyo
+        llChar[y][x] = color; // Place the Puyo
         return true;
     }
 
@@ -136,7 +136,7 @@ public:
         int x,y;
         for (y=0; y < this->nHeight; ++y) {
             for (x=0; x < this->nWidth; ++x) {
-                std::cout << llGrid[y][x] << ' ';
+                std::cout << llChar[y][x] << ' ';
             }
             std::cout << std::endl;
         }
@@ -161,7 +161,7 @@ public:
                 // G2D::drawRectangle(V2 P1, V2 Size, Color c, bool fill);
                 vPuyoPos = vPosition + V2(this->nSize*x, this->nSize*y);
 
-                G2D::drawRectangle(vPuyoPos, vSize, drawPuyo(llGrid[y][x]), true);
+                G2D::drawRectangle(vPuyoPos, vSize, drawPuyo(llChar[y][x]), true);
                 G2D::drawRectangle(vPuyoPos, vSize, Color::White, false);
             }
         }
@@ -178,19 +178,28 @@ enum /*class*/ Direction {
 };
 
 class Player {
-public:
+private:
     V2 vPosition;
     Color cColor;
     std::unordered_map<int, Key> keybinds;
+    std::vector<Grid> lGrids;
+
+public:
 
     Player(const V2 vPosition) : cColor(ColorFromHex(0xF43B9A)) {
         this->vPosition = vPosition;
         // this->cColor = ColorFromHex(0xF43B9A);
     }
 
-    // void move(const int nDirection)
-    void /*Player::*/move(const int nDirection) {
-        switch (static_cast<Direction>(nDirection)) {
+    void sendInput() {
+        for (Grid G : lGrids) {
+
+        }
+    }
+
+    void move(const int nDirection) {
+        Direction D = static_cast<Direction>(nDirection);
+        switch (D) {
             case Direction::UP:
                 this->vPosition = this->vPosition + V2(0, 1);
                 break;
@@ -213,18 +222,12 @@ public:
     }
 };
 
-class Screen {
-private:
-    std::vector<Grid> lGrids;
-public:
-
-};
-
 // ON TOP
 // struct GameData
 class GameData {
 private:
     int nID;
+    // Screen xScreen;
 
 public:
     int nFrame;
@@ -242,6 +245,10 @@ public:
 
     void addCursor(Cursor C) {
         this->lCursors.push_back(C);
+    }
+
+    void render() const {
+
     }
 };
 
@@ -303,8 +310,8 @@ void render(const GameData& G)
     G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
     G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
-    G.lCursors[1].render(G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-    G.lCursors[1].renderPosition(V2(0, 20), G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    // G.lCursors[1].render(G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
+    // G.lCursors[1].renderPosition(V2(0, 20), G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
 
 
 
