@@ -122,12 +122,13 @@ public:
         return umColors[cColor];
     }
 
-    void render() const {
+    void render(V2 vSize) const {
         // V2 gridPos = vPosition * V2(20, 20);
         // G2D::drawRectangle(gridPos, V2(20, 20), cColor, true);
         // G2D::drawRectangle(vPosition, V2(20, 20), , true);
         Color C = charToColor();
-        G2D::drawRectangle(vPosition, V2(20, 20), C, true);
+        // G2D::drawRectangle(vPosition, V2(20, 20), C, true);
+        G2D::drawRectangle(vPosition, vSize, C, true);
     }
 
     V2 getPosition() const { return vPosition; }
@@ -148,18 +149,20 @@ public:
     PuyoPair(V2 vPos1, char c1, char c2)
     : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0,20), c2), nRotationState(0) {}
 
-    void rotate() {
+    void rotateClockwise() {
         nRotationState = (nRotationState+1)%4;
     }
 
-    void move(V2 direction) {
-        xPuyoOne.setPosition(xPuyoOne.getPosition() + direction);
-        xPuyoTwo.setPosition(xPuyoTwo.getPosition() + direction);
+    void move(V2 vDirection) {
+        xPuyoOne.setPosition(xPuyoOne.getPosition() +vDirection);
+        xPuyoTwo.setPosition(xPuyoTwo.getPosition() +vDirection);
     }
 
-    void render() const {
-        xPuyoOne.render();
-        xPuyoTwo.render();
+    void render(V2 vSize) const {
+
+
+        xPuyoOne.render(vSize);
+        xPuyoTwo.render(vSize);
     }
 };
 
@@ -168,17 +171,24 @@ private:
     const int nWidth = 6;
     const int nHeight = 12;
     std::vector<std::vector<char>> llChar;
-    V2 vPosition;
-    const int nSize = 20;
-    // PuyoPair xPiece;
+    V2 vGridPosition;
+    const int nPuyoSize = 20;
+    const V2 vPuyoSize = V2(nPuyoSize, nPuyoSize);
+    PuyoPair xPiece;
+
+    PuyoPair initialPiece() {
+        return PuyoPair(V2(nPuyoSize*3, nPuyoSize*3), 'B', 'R');
+    }
 
 public:
-    Grid(V2 vPosition) : vPosition(vPosition) {
+    Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
         llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
+        V2 vPieceStart = V2(nPuyoSize*nHeight, nPuyoSize*3);
+        // xPiece = PuyoPair(vPieceStart, 'B', 'R');
     }
 
     void moveGrid(V2 vDirection) {
-        this->vPosition = this->vPosition + vDirection;
+        this->vGridPosition = this->vGridPosition + vDirection;
     }
 
     bool isPositionValid(const V2& pos) const {
@@ -205,22 +215,23 @@ public:
             return false;
         }
         // llChar[vP.y][vP.x] = charToColor();
-        llChar[vP.y/nSize][vP.x/nSize] = P.getColor();
+        llChar[vP.y/nPuyoSize][vP.x/nPuyoSize] = P.getColor();
         return true;
     }
 
     void G2DDisplay() const {
         int x, y;
-        V2 vPuyoPos, vSize;
-        vSize = V2(this->nSize, this->nSize);
+        // V2 vPuyoPos, vSize;
+        V2 vPuyoPos;
+        // vSize = V2(this->nPuyoSize, this->nPuyoSize);
         for (y = 0; y < this->nHeight; ++y) {
             for (x = 0; x < this->nWidth; ++x) {
-                vPuyoPos = vPosition + V2(this->nSize * x, this->nSize * y);
+                vPuyoPos = vGridPosition + V2(this->nPuyoSize * x, this->nPuyoSize * y);
                 // G2D::drawRectangle(vPuyoPos, vSize, drawPuyo(llChar[y][x]), true);
                 // Puyo P(V2(x, y), charToColor(llChar[x][y]));
                 Puyo P(V2(x, y), llChar[x][y]);
-                P.render();
-                G2D::drawRectangle(vPuyoPos, vSize, Color::White, false);
+                P.render(vPuyoPos);
+                G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::White, false);
             }
         }
     }
