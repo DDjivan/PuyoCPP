@@ -114,7 +114,7 @@ public:
 
     Color charToColor() const {
         std::unordered_map<char, Color> umColors;
-        umColors['.'] = Color::Gray;
+        umColors['.'] = ColorFromHex(0xc8c8c8); // #c8c8c8;
         umColors['R'] = Color::Red;
         umColors['G'] = Color::Green;
         umColors['B'] = Color::Blue;
@@ -157,13 +157,12 @@ public:
     }
 
     void move(V2 vDirection) {
-
-        if (DEBUG) {
-            std::cout << "PuyoPair.move: PuyoPair moved: "
-            << "Puyo1 at " << std::string(xPuyoOne.getPosition()) << ", "
-            << "Puyo2 at " << std::string(xPuyoTwo.getPosition()) << std::endl
-            ;
-        }
+        // if (DEBUG) {
+        //     std::cout << "PuyoPair.move: PuyoPair moved: "
+        //     << "Puyo1 at " << std::string(xPuyoOne.getPosition()) << ", "
+        //     << "Puyo2 at " << std::string(xPuyoTwo.getPosition()) << std::endl
+        //     ;
+        // }
         xPuyoOne.addPosition(vDirection);
         xPuyoTwo.addPosition(vDirection);
     }
@@ -197,7 +196,7 @@ private:
 public:
     // Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
     Grid(V2 P) : vGridPosition(P), xPiece(PuyoPair(vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3)), 'B', 'R', nPuyoSize)) {
-        llChar.resize(nWidth, std::vector<char>(nHeight, '.'));
+        llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
     }
 
     int getPuyoSize() { return nPuyoSize; }
@@ -207,14 +206,17 @@ public:
     }
 
     bool isPositionValid(const V2 vP) const {
+        V2 vP2 = (vP - vGridPosition)/nPuyoSize;
         int nActualWidth = vGridPosition.x +nPuyoSize*nWidth;
         int nActualHeight = vGridPosition.y +nPuyoSize*nHeight;
 
-        if (vP.x < vGridPosition.x || vP.x >= nActualWidth || vP.y < vGridPosition.y || vP.y >= nActualHeight) {
+        // if (vP.x < vGridPosition.x || vP.x >= nActualWidth || vP.y < vGridPosition.y || vP.y >= nActualHeight) {
+        if (vP2.x < 0 || vP2.x > nWidth-1 || vP2.y < 0 || vP2.y > nHeight-1) {
             return false;
         }
 
-        return (llChar[vP.y][vP.x] == '.');
+        // return (llChar[vP.y/nPuyoSize][vP.x/nPuyoSize] == '.');
+        return (llChar[vP2.y][vP2.x] == '.');
     }
 
     bool placePuyo(Puyo P) {
@@ -233,15 +235,15 @@ public:
     }
 
     bool movePiece(V2 vDirection) {
-        // V2 pos1 = xPiece.xPuyoOne.getPosition();
-        // V2 pos2 = xPiece.xPuyoTwo.getPosition();
-        //
-        // V2 newPos1 = pos1 + vDirection;
-        // V2 newPos2 = pos2 + vDirection;
+        V2 pos1 = xPiece.xPuyoOne.getPosition();
+        V2 pos2 = xPiece.xPuyoTwo.getPosition();
 
-        // if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
-        if (1) {
-            if (DEBUG) { std::cout <<"Moving to " <<vDirection <<std::endl; }
+        V2 newPos1 = pos1 + vDirection;
+        V2 newPos2 = pos2 + vDirection;
+
+        if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
+        // if (1) {
+            // if (DEBUG) { std::cout <<"Moving to " <<vDirection <<std::endl; }
             xPiece.move(vDirection);
             return true;
         }
@@ -256,7 +258,7 @@ public:
         int x,y;
         for (y=0; y < this->nHeight; ++y) {
             for (x=0; x < this->nWidth; ++x) {
-                std::cout << llChar[x][y] << ' ';
+                std::cout << llChar[y][x] << ' ';
             }
             std::cout << std::endl;
         }
@@ -268,9 +270,9 @@ public:
         for (y = 0; y < this->nHeight; ++y) {
             for (x = 0; x < this->nWidth; ++x) {
                 vPuyoPos = vGridPosition + V2(this->nPuyoSize * x, this->nPuyoSize * y);
-                Puyo P(vPuyoPos, llChar[x][y]);
+                Puyo P(vPuyoPos, llChar[y][x]);
                 P.render(vPuyoSize);
-                G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::Red, false);
+                G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::Gray, false);
             }
         }
         xPiece.render(vPuyoSize);
