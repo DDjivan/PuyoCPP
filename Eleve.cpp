@@ -123,7 +123,7 @@ public:
     }
 
     void render(V2 vSize) const {
-        if (DEBUG && cColor != '.') std::cout <<"Puyo.render: current pos is " <<vPosition.x <<", " <<vPosition.y <<std::endl;
+        // if (DEBUG && cColor != '.') std::cout <<"Puyo.render: current pos is " <<vPosition.x <<", " <<vPosition.y <<std::endl;
         Color C = charToColor();
         G2D::drawRectangle(vPosition, vSize, C, true);
     }
@@ -169,11 +169,11 @@ public:
     }
 
     void render(V2 vPuyoSize) const {
-        if (DEBUG) {
-            std::cout <<"PuyoPair.render: Rendering PuyoPair: "
-            <<"Puyo1 at " <<xPuyoOne.vPosition.x << ", " <<xPuyoOne.vPosition.y <<" and "
-            <<"Puyo2 at " <<xPuyoTwo.vPosition.x << ", " <<xPuyoTwo.vPosition.y <<std::endl;
-        }
+        // if (DEBUG) {
+        //     std::cout <<"PuyoPair.render: Rendering PuyoPair: "
+        //     <<"Puyo1 at " <<xPuyoOne.vPosition.x << ", " <<xPuyoOne.vPosition.y <<" and "
+        //     <<"Puyo2 at " <<xPuyoTwo.vPosition.x << ", " <<xPuyoTwo.vPosition.y <<std::endl;
+        // }
         xPuyoOne.render(vPuyoSize);
         xPuyoTwo.render(vPuyoSize);
     }
@@ -239,7 +239,8 @@ public:
         // V2 newPos1 = pos1 + vDirection;
         // V2 newPos2 = pos2 + vDirection;
 
-        if (1) { //(isPositionValid(newPos1) && isPositionValid(newPos2)) {
+        // if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
+        if (1) {
             if (DEBUG) { std::cout <<"Moving to " <<vDirection <<std::endl; }
             xPiece.move(vDirection);
             return true;
@@ -290,9 +291,10 @@ enum /*class*/ Direction {
 class Player {
 private:
     std::unordered_map<int, Key> keybinds;
-    std::vector<Grid> lGrids;
 
 public:
+    std::vector<Grid> lGrids;
+
     Player() {}
 
     void addGrid(Grid& G) {
@@ -301,12 +303,12 @@ public:
 
     void sendInput() {
         if (lGrids.empty()) return;
-        for (Grid& G : lGrids) {
-            // for (const auto& [key, action] : keybinds) {
-            for (std::pair<int, Key> P : keybinds) {
-                // if (G2D::isKeyPressed(P.second)) {
-                if (G2D::keyHasBeenHit(P.second)) {
-                    if (DEBUG) std::cout << "Key pressed: " << P.first << std::endl;
+
+        for (std::pair<int, Key> P : keybinds) {
+            if (G2D::keyHasBeenHit(P.second)) {
+                if (DEBUG) std::cout << "Key pressed: " << P.first << std::endl;
+
+                for (Grid& G : lGrids) {
                     switch (P.first) {
                         case UP:
                             // G.xPiece.rotateClockwise();
@@ -352,7 +354,7 @@ public:
     int nScore;
     Player xPlayer;
     std::vector<Cursor> lCursors;
-    std::vector<Grid> lGrids;
+    // std::vector<Grid> lGrids;
 
     GameData(const int ID, Player P)
     // : nID(ID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), xPlayer(P) {
@@ -365,12 +367,12 @@ public:
         this->lCursors.push_back(C);
     }
 
-    void addGrid(Grid& G) {
-        this->lGrids.push_back(G);
-    }
+    // void addGrid(Grid& G) {
+    //     this->lGrids.push_back(G);
+    // }
 
     void render() const {
-        for (Grid G : lGrids) {
+        for (Grid G : xPlayer.lGrids) {
             G.G2DDisplay();
             // G.coutDisplay();
         }
@@ -497,10 +499,12 @@ int main(int argc, char* argv[])
     }
 
     Grid grid001 = Grid(V2(110, 140));
+    Grid grid002 = Grid(V2(410, 140));
 
     // Player P1 = Player(V2(20, 80));
     Player P1 = Player();
     P1.addGrid(grid001);
+    P1.addGrid(grid002);
 
     std::unordered_map<int, Key> keyMap;
     keyMap[UP] = Key::E;
@@ -522,9 +526,9 @@ int main(int argc, char* argv[])
     // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
     // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
 
-    G1.addGrid(grid001);
+    // G1.addGrid(grid001);
 
-    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("test1"));
+    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("le test1"));
 
     int callToLogicPerSec = 240*nSpeed;
     if (DEBUG) std::cout <<"callToLogicPerSec: " <<callToLogicPerSec <<" \n";
