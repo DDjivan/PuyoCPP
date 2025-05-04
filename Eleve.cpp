@@ -60,7 +60,7 @@ public:
 
         G2D::drawRectWithTexture(nTextureId, vImagePos, vImageSize, fAngle);
         // G2D::drawRectWithTexture(nTextureId, vNewPos, vImageSize, fAngle);
-        G2D::setPixel(vNewPos, Color::Blue);
+        // G2D::setPixel(vNewPos, Color::Blue);
     }
 };
 
@@ -110,7 +110,6 @@ public:
     char cColor;// = '.';
 
     Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
-    // Puyo(V2 P) : vPosition(P), cColor('.') {}
 
     Color charToColor() const {
         std::unordered_map<char, Color> umColors;
@@ -123,7 +122,6 @@ public:
     }
 
     void render(V2 vSize) const {
-        // if (DEBUG && cColor != '.') std::cout <<"Puyo.render: current pos is " <<vPosition.x <<", " <<vPosition.y <<std::endl;
         Color C = charToColor();
         G2D::drawRectangle(vPosition, vSize, C, true);
     }
@@ -168,11 +166,6 @@ public:
     }
 
     void render(V2 vPuyoSize) const {
-        // if (DEBUG) {
-        //     std::cout <<"PuyoPair.render: Rendering PuyoPair: "
-        //     <<"Puyo1 at " <<xPuyoOne.vPosition.x << ", " <<xPuyoOne.vPosition.y <<" and "
-        //     <<"Puyo2 at " <<xPuyoTwo.vPosition.x << ", " <<xPuyoTwo.vPosition.y <<std::endl;
-        // }
         xPuyoOne.render(vPuyoSize);
         xPuyoTwo.render(vPuyoSize);
     }
@@ -194,8 +187,7 @@ private:
     }
 
 public:
-    // Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
-    Grid(V2 P) : vGridPosition(P), xPiece(PuyoPair(vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3)), 'B', 'R', nPuyoSize)) {
+    Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
         llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
     }
 
@@ -210,16 +202,14 @@ public:
         int nActualWidth = vGridPosition.x +nPuyoSize*nWidth;
         int nActualHeight = vGridPosition.y +nPuyoSize*nHeight;
 
-        // if (vP.x < vGridPosition.x || vP.x >= nActualWidth || vP.y < vGridPosition.y || vP.y >= nActualHeight) {
         if (vP2.x < 0 || vP2.x > nWidth-1 || vP2.y < 0 || vP2.y > nHeight-1) {
             return false;
         }
 
-        // return (llChar[vP.y/nPuyoSize][vP.x/nPuyoSize] == '.');
         return (llChar[vP2.y][vP2.x] == '.');
     }
 
-    bool placePuyo(Puyo P) {
+    bool placePuyo(Puyo P) {  // unused yet
         V2 vP = P.getPosition();
 
         if (vP.x < 0 || vP.x >= this->nWidth || vP.y < 0 || vP.y >= this->nHeight) {
@@ -229,7 +219,7 @@ public:
             if (DEBUG) std::cout << "Grid.placePuyo: Occupied position: " << vP << std::endl;
             return false;
         }
-        // llChar[vP.y][vP.x] = charToColor();
+
         llChar[vP.y/nPuyoSize][vP.x/nPuyoSize] = P.getColor();
         return true;
     }
@@ -242,7 +232,6 @@ public:
         V2 newPos2 = pos2 + vDirection;
 
         if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
-        // if (1) {
             // if (DEBUG) { std::cout <<"Moving to " <<vDirection <<std::endl; }
             xPiece.move(vDirection);
             return true;
@@ -359,7 +348,6 @@ public:
     // std::vector<Grid> lGrids;
 
     GameData(const int ID, Player P)
-    // : nID(ID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), xPlayer(P) {
     : nID(ID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), xPlayer(P) {
     }
 
@@ -368,10 +356,6 @@ public:
     void addCursor(Cursor C) {
         this->lCursors.push_back(C);
     }
-
-    // void addGrid(Grid& G) {
-    //     this->lGrids.push_back(G);
-    // }
 
     void render() const {
         for (Grid G : xPlayer.lGrids) {
@@ -406,7 +390,6 @@ void render(const GameData& G)
         );
         G2D::drawStringFontMono(V2(100, G.nHeight / 2),
                                 std::string("Paused."), 50, 5,
-                                // ColorFrom255(0, 133, 255)
                                 ColorFromHex(0xeafaff) // #eafaff
         );
         G2D::Show();
@@ -419,11 +402,6 @@ void render(const GameData& G)
     G2D::getMousePos(x, y);
     V2 vMousePos = V2(x, y);
 
-    // Cursor cursorA("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
-    // Cursor cursorB("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
-
-
-    // G.gGrid.G2DDisplay();
     G.render();
 
 
@@ -503,7 +481,6 @@ int main(int argc, char* argv[])
     Grid grid001 = Grid(V2(110, 140));
     Grid grid002 = Grid(V2(410, 140));
 
-    // Player P1 = Player(V2(20, 80));
     Player P1 = Player();
     P1.addGrid(grid001);
     P1.addGrid(grid002);
@@ -521,14 +498,8 @@ int main(int argc, char* argv[])
     GameData G1 = GameData(1, P1);
 
     Cursor cursorA = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
-    Cursor cursorB = Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15));
 
     G1.addCursor(cursorA);
-    G1.addCursor(cursorB);
-    // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
-    // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
-
-    // G1.addGrid(grid001);
 
     G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("le test1"));
 
