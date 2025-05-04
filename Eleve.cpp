@@ -104,10 +104,11 @@ public:
 
 class Puyo {
 private:
+
+public:
     V2 vPosition;
     char cColor;// = '.';
 
-public:
     Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
     // Puyo(V2 P) : vPosition(P), cColor('.') {}
 
@@ -122,14 +123,20 @@ public:
     }
 
     void render(V2 vSize) const {
+        if (DEBUG && cColor != '.') std::cout <<"Puyo.render: current pos is " <<vPosition.x <<", " <<vPosition.y <<std::endl;
         Color C = charToColor();
         G2D::drawRectangle(vPosition, vSize, C, true);
     }
 
-    V2 getPosition() const { return vPosition; }
-    char getColor() const { return cColor; }
+    V2 getPosition() { return vPosition; }
+    char getColor() { return cColor; }
 
-    void setPosition(const V2& P) { vPosition = P; }
+    void setPosition(V2 P) { vPosition = P; }
+    void addPosition(V2 P) {
+        // if (DEBUG) std::cout <<"Puyo.setPosition: current pos is " <<vPosition <<std::endl;
+        vPosition = vPosition +P;
+        // if (DEBUG) std::cout <<"Puyo.setPosition: current pos is " <<vPosition <<std::endl;
+    }
 
 };
 
@@ -150,13 +157,23 @@ public:
     }
 
     void move(V2 vDirection) {
-        xPuyoOne.setPosition(xPuyoOne.getPosition() +vDirection);
-        xPuyoTwo.setPosition(xPuyoTwo.getPosition() +vDirection);
+
+        if (DEBUG) {
+            std::cout << "PuyoPair.move: PuyoPair moved: "
+            << "Puyo1 at " << std::string(xPuyoOne.getPosition()) << ", "
+            << "Puyo2 at " << std::string(xPuyoTwo.getPosition()) << std::endl
+            ;
+        }
+        xPuyoOne.addPosition(vDirection);
+        xPuyoTwo.addPosition(vDirection);
     }
 
     void render(V2 vPuyoSize) const {
-
-
+        if (DEBUG) {
+            std::cout <<"PuyoPair.render: Rendering PuyoPair: "
+            <<"Puyo1 at " <<xPuyoOne.vPosition.x << ", " <<xPuyoOne.vPosition.y <<" and "
+            <<"Puyo2 at " <<xPuyoTwo.vPosition.x << ", " <<xPuyoTwo.vPosition.y <<std::endl;
+        }
         xPuyoOne.render(vPuyoSize);
         xPuyoTwo.render(vPuyoSize);
     }
@@ -168,18 +185,22 @@ private:
     const int nHeight = 12;
     std::vector<std::vector<char>> llChar;
     V2 vGridPosition;
-    const int nPuyoSize = 20;
+    const int nPuyoSize = 40;
     const V2 vPuyoSize = V2(nPuyoSize, nPuyoSize);
     PuyoPair xPiece;
 
     PuyoPair initialPiece() {
-        return PuyoPair(V2(nPuyoSize*nHeight, nPuyoSize*3), 'B', 'R', nPuyoSize);
+        V2 vLocation = vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3));
+        return PuyoPair(vLocation, 'B', 'R', nPuyoSize);
     }
 
 public:
-    Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
+    // Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
+    Grid(V2 P) : vGridPosition(P), xPiece(PuyoPair(vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3)), 'B', 'R', nPuyoSize)) {
         llChar.resize(nWidth, std::vector<char>(nHeight, '.'));
     }
+
+    int getPuyoSize() { return nPuyoSize; }
 
     void moveGrid(V2 vDirection) {
         this->vGridPosition = this->vGridPosition + vDirection;
@@ -196,7 +217,7 @@ public:
         return (llChar[vP.y][vP.x] == '.');
     }
 
-    bool placePuyo(const Puyo& P) {
+    bool placePuyo(Puyo P) {
         V2 vP = P.getPosition();
 
         if (vP.x < 0 || vP.x >= this->nWidth || vP.y < 0 || vP.y >= this->nHeight) {
@@ -212,13 +233,14 @@ public:
     }
 
     bool movePiece(V2 vDirection) {
-        V2 pos1 = xPiece.xPuyoOne.getPosition();
-        V2 pos2 = xPiece.xPuyoTwo.getPosition();
+        // V2 pos1 = xPiece.xPuyoOne.getPosition();
+        // V2 pos2 = xPiece.xPuyoTwo.getPosition();
+        //
+        // V2 newPos1 = pos1 + vDirection;
+        // V2 newPos2 = pos2 + vDirection;
 
-        V2 newPos1 = pos1 + vDirection;
-        V2 newPos2 = pos2 + vDirection;
-
-        if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
+        if (1) { //(isPositionValid(newPos1) && isPositionValid(newPos2)) {
+            if (DEBUG) { std::cout <<"Moving to " <<vDirection <<std::endl; }
             xPiece.move(vDirection);
             return true;
         }
@@ -233,7 +255,7 @@ public:
         int x,y;
         for (y=0; y < this->nHeight; ++y) {
             for (x=0; x < this->nWidth; ++x) {
-                std::cout << llChar[y][x] << ' ';
+                std::cout << llChar[x][y] << ' ';
             }
             std::cout << std::endl;
         }
@@ -250,6 +272,7 @@ public:
                 G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::Red, false);
             }
         }
+        xPiece.render(vPuyoSize);
     }
 };
 
@@ -277,30 +300,36 @@ public:
     }
 
     void sendInput() {
-        for (Grid G : lGrids) {
-
-        }
-    }
-
-    void move(const int nDirection) {
-        Direction D = static_cast<Direction>(nDirection);
-        switch (D) {
-            case Direction::UP:
-                // this->vPosition = this->vPosition + V2(0, 1);
-
-                break;
-            case Direction::DOWN:
-                // this->vPosition = this->vPosition + V2(0, -1);
-
-                break;
-            case Direction::RIGHT:
-                // this->vPosition = this->vPosition + V2(1, 0);
-
-                break;
-            case Direction::LEFT:
-                // this->vPosition = this->vPosition + V2(-1, 0);
-
-                break;
+        if (lGrids.empty()) return;
+        for (Grid& G : lGrids) {
+            // for (const auto& [key, action] : keybinds) {
+            for (std::pair<int, Key> P : keybinds) {
+                // if (G2D::isKeyPressed(P.second)) {
+                if (G2D::keyHasBeenHit(P.second)) {
+                    if (DEBUG) std::cout << "Key pressed: " << P.first << std::endl;
+                    switch (P.first) {
+                        case UP:
+                            // G.xPiece.rotateClockwise();
+                            G.movePiece(V2(0, +G.getPuyoSize()));
+                            break;
+                        case DOWN:
+                            G.movePiece(V2(0, -G.getPuyoSize()));
+                            break;
+                        case LEFT:
+                            G.movePiece(V2(-G.getPuyoSize(), 0));
+                            break;
+                        case RIGHT:
+                            G.movePiece(V2(G.getPuyoSize(), 0));
+                            break;
+                        case OK:
+                            break;
+                        case NO:
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         }
     }
 
@@ -316,7 +345,6 @@ public:
 class GameData {
 private:
     int nID;
-    // Screen xScreen;
 
 public:
     int nFrame;
@@ -408,14 +436,6 @@ void render(const GameData& G)
     G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
     G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
-    // G.lCursors[1].render(G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-    // G.lCursors[1].renderPosition(V2(0, 20), G.xPlayer.vPosition, G2D::isKeyPressed(Key::SPACE));
-
-
-
-
-
-
     G2D::Show();
 }
 
@@ -437,18 +457,6 @@ void Logic(GameData& G)
         G.GameData::function1(55);
     }
 
-    std::unordered_map<int, Key> keyMap;
-    keyMap[UP] = Key::E;
-    keyMap[LEFT] = Key::S;
-    keyMap[DOWN] = Key::D;
-    keyMap[RIGHT] = Key::F;
-
-    for (std::pair<int, Key> P : keyMap) {
-        if (G2D::isKeyPressed(P.second)) {
-            G.xPlayer.move(P.first);
-        }
-    }
-
     if (G2D::isKeyPressed(Key::Z)) {
         G.lCursors[0].addAngleRad(M_PI/180.0f);
     }
@@ -456,11 +464,9 @@ void Logic(GameData& G)
         G.lCursors[0].addAngleDeg(-1);
     }
 
+    G.xPlayer.sendInput();
 
-    // G.gGrid.placePuyo(2, 5, 'R');
-    // G.gGrid.placePuyo(3, 5, 'G');
-    // G.gGrid.placePuyo(2, 6, 'R');
-    // G.gGrid.G2DDisplay();
+
 
     // G.gGrid.vPosition = G.gGrid.vPosition + V2(1, 0);
     // G.gGrid.moveGrid(V2(1, 0));
@@ -484,7 +490,7 @@ int main(int argc, char* argv[])
     } else {
         // nSpeed = atoi(argv[1]);
         // nSpeed = std::stoi(argv[1]);
-        int argv1 = std::stod(argv[1]);
+        double argv1 = std::stod(argv[1]);
 
 
         nSpeed = argv1;
