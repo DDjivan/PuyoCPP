@@ -105,12 +105,11 @@ public:
 class Puyo {
 private:
     V2 vPosition;
-    // Color cColor;
-    char cColor;
+    char cColor;// = '.';
 
 public:
-    // Puyo(V2 pos, Color c) : vPosition(pos), cColor(c) {}
     Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
+    // Puyo(V2 P) : vPosition(P), cColor('.') {}
 
     Color charToColor() const {
         std::unordered_map<char, Color> umColors;
@@ -123,16 +122,11 @@ public:
     }
 
     void render(V2 vSize) const {
-        // V2 gridPos = vPosition * V2(20, 20);
-        // G2D::drawRectangle(gridPos, V2(20, 20), cColor, true);
-        // G2D::drawRectangle(vPosition, V2(20, 20), , true);
         Color C = charToColor();
-        // G2D::drawRectangle(vPosition, V2(20, 20), C, true);
         G2D::drawRectangle(vPosition, vSize, C, true);
     }
 
     V2 getPosition() const { return vPosition; }
-    // Color getColor() const { return cColor; }
     char getColor() const { return cColor; }
 
     void setPosition(const V2& P) { vPosition = P; }
@@ -141,11 +135,13 @@ public:
 
 class PuyoPair {
 private:
+
+
+public:
     Puyo xPuyoOne;
     Puyo xPuyoTwo;
     int nRotationState;
 
-public:
     PuyoPair(V2 vPos1, char c1, char c2, int nPuyoSize)
     : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0, nPuyoSize), c2), nRotationState(0) {}
 
@@ -182,26 +178,22 @@ private:
 
 public:
     Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
-        llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
-        // V2 vPieceStart = V2(nPuyoSize*nHeight, nPuyoSize*3);
-        // xPiece = PuyoPair(vPieceStart, 'B', 'R');
+        llChar.resize(nWidth, std::vector<char>(nHeight, '.'));
     }
 
     void moveGrid(V2 vDirection) {
         this->vGridPosition = this->vGridPosition + vDirection;
     }
 
-    bool isPositionValid(const V2& pos) const {
-        int x = static_cast<int>(pos.x);
-        int y = static_cast<int>(pos.y);
+    bool isPositionValid(const V2 vP) const {
+        int nActualWidth = vGridPosition.x +nPuyoSize*nWidth;
+        int nActualHeight = vGridPosition.y +nPuyoSize*nHeight;
 
-        // Check bounds
-        if (x < 0 || x >= nWidth || y < 0 || y >= nHeight) {
+        if (vP.x < vGridPosition.x || vP.x >= nActualWidth || vP.y < vGridPosition.y || vP.y >= nActualHeight) {
             return false;
         }
 
-        // Check if the position is occupied
-        return llChar[y][x] == '.';
+        return (llChar[vP.y][vP.x] == '.');
     }
 
     bool placePuyo(const Puyo& P) {
@@ -219,19 +211,43 @@ public:
         return true;
     }
 
+    bool movePiece(V2 vDirection) {
+        V2 pos1 = xPiece.xPuyoOne.getPosition();
+        V2 pos2 = xPiece.xPuyoTwo.getPosition();
+
+        V2 newPos1 = pos1 + vDirection;
+        V2 newPos2 = pos2 + vDirection;
+
+        if (isPositionValid(newPos1) && isPositionValid(newPos2)) {
+            xPiece.move(vDirection);
+            return true;
+        }
+
+        return false;
+    }
+
+
+
+
+    void coutDisplay() const {
+        int x,y;
+        for (y=0; y < this->nHeight; ++y) {
+            for (x=0; x < this->nWidth; ++x) {
+                std::cout << llChar[y][x] << ' ';
+            }
+            std::cout << std::endl;
+        }
+    }
+
     void G2DDisplay() const {
         int x, y;
-        // V2 vPuyoPos, vSize;
         V2 vPuyoPos;
-        // vSize = V2(this->nPuyoSize, this->nPuyoSize);
         for (y = 0; y < this->nHeight; ++y) {
             for (x = 0; x < this->nWidth; ++x) {
                 vPuyoPos = vGridPosition + V2(this->nPuyoSize * x, this->nPuyoSize * y);
-                // G2D::drawRectangle(vPuyoPos, vSize, drawPuyo(llChar[y][x]), true);
-                // Puyo P(V2(x, y), charToColor(llChar[x][y]));
-                Puyo P(V2(x, y), llChar[x][y]);
-                P.render(vPuyoPos);
-                G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::White, false);
+                Puyo P(vPuyoPos, llChar[x][y]);
+                P.render(vPuyoSize);
+                G2D::drawRectangle(vPuyoPos, vPuyoSize, Color::Red, false);
             }
         }
     }
@@ -250,16 +266,14 @@ enum /*class*/ Direction {
 
 class Player {
 private:
-    V2 vPosition;
-    Color cColor;
     std::unordered_map<int, Key> keybinds;
     std::vector<Grid> lGrids;
 
 public:
+    Player() {}
 
-    Player(const V2 vPosition) : cColor(ColorFromHex(0xF43B9A)) {
-        this->vPosition = vPosition;
-        // this->cColor = ColorFromHex(0xF43B9A);
+    void addGrid(Grid& G) {
+        this->lGrids.push_back(G);
     }
 
     void sendInput() {
@@ -272,16 +286,20 @@ public:
         Direction D = static_cast<Direction>(nDirection);
         switch (D) {
             case Direction::UP:
-                this->vPosition = this->vPosition + V2(0, 1);
+                // this->vPosition = this->vPosition + V2(0, 1);
+
                 break;
             case Direction::DOWN:
-                this->vPosition = this->vPosition + V2(0, -1);
+                // this->vPosition = this->vPosition + V2(0, -1);
+
                 break;
             case Direction::RIGHT:
-                this->vPosition = this->vPosition + V2(1, 0);
+                // this->vPosition = this->vPosition + V2(1, 0);
+
                 break;
             case Direction::LEFT:
-                this->vPosition = this->vPosition + V2(-1, 0);
+                // this->vPosition = this->vPosition + V2(-1, 0);
+
                 break;
         }
     }
@@ -306,6 +324,7 @@ public:
     int nScore;
     Player xPlayer;
     std::vector<Cursor> lCursors;
+    std::vector<Grid> lGrids;
 
     GameData(const int ID, Player P)
     // : nID(ID), nFrame(0), nHeight(1280/2), nWidth(720/2), nScore(0), xPlayer(P) {
@@ -318,8 +337,15 @@ public:
         this->lCursors.push_back(C);
     }
 
-    void render() const {
+    void addGrid(Grid& G) {
+        this->lGrids.push_back(G);
+    }
 
+    void render() const {
+        for (Grid G : lGrids) {
+            G.G2DDisplay();
+            // G.coutDisplay();
+        }
     }
 };
 
@@ -366,6 +392,7 @@ void render(const GameData& G)
 
 
     // G.gGrid.G2DDisplay();
+    G.render();
 
 
 
@@ -463,9 +490,11 @@ int main(int argc, char* argv[])
         nSpeed = argv1;
     }
 
+    Grid grid001 = Grid(V2(110, 140));
 
-
-    Player P1 = Player(V2(20, 80));
+    // Player P1 = Player(V2(20, 80));
+    Player P1 = Player();
+    P1.addGrid(grid001);
 
     std::unordered_map<int, Key> keyMap;
     keyMap[UP] = Key::E;
@@ -476,7 +505,6 @@ int main(int argc, char* argv[])
     keyMap[NO] = Key::K;
     P1.setKeys(keyMap);
 
-    Grid grid001(V2(110, 140));
 
     GameData G1 = GameData(1, P1);
 
@@ -487,6 +515,8 @@ int main(int argc, char* argv[])
     G1.addCursor(cursorB);
     // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
     // G1.lCursors.emplace_back(Cursor("M/default2.png", "M/pointer2.png", V2(12, 12), V2(43, 15)));
+
+    G1.addGrid(grid001);
 
     G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("test1"));
 
