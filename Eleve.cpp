@@ -105,19 +105,62 @@ public:
 class Puyo {
 private:
     V2 vPosition;
-    Color cColor;
+    // Color cColor;
+    char cColor;
 
 public:
-    Puyo(V2 pos, Color c) : vPosition(pos), cColor(c) {}
+    // Puyo(V2 pos, Color c) : vPosition(pos), cColor(c) {}
+    Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
+
+    Color charToColor() const {
+        std::unordered_map<char, Color> umColors;
+        umColors['.'] = Color::Gray;
+        umColors['R'] = Color::Red;
+        umColors['G'] = Color::Green;
+        umColors['B'] = Color::Blue;
+
+        return umColors[cColor];
+    }
 
     void render() const {
         // V2 gridPos = vPosition * V2(20, 20);
         // G2D::drawRectangle(gridPos, V2(20, 20), cColor, true);
-        G2D::drawRectangle(vPosition, V2(20, 20), cColor, true);
+        // G2D::drawRectangle(vPosition, V2(20, 20), , true);
+        Color C = charToColor();
+        G2D::drawRectangle(vPosition, V2(20, 20), C, true);
     }
 
     V2 getPosition() const { return vPosition; }
+    // Color getColor() const { return cColor; }
+    char getColor() const { return cColor; }
+
     void setPosition(const V2& P) { vPosition = P; }
+
+};
+
+class PuyoPair {
+private:
+    Puyo xPuyoOne;
+    Puyo xPuyoTwo;
+    int nRotationState;
+
+public:
+    PuyoPair(V2 vPos1, char c1, char c2)
+    : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0,20), c2), nRotationState(0) {}
+
+    void rotate() {
+        nRotationState = (nRotationState+1)%4;
+    }
+
+    void move(V2 direction) {
+        xPuyoOne.setPosition(xPuyoOne.getPosition() + direction);
+        xPuyoTwo.setPosition(xPuyoTwo.getPosition() + direction);
+    }
+
+    void render() const {
+        xPuyoOne.render();
+        xPuyoTwo.render();
+    }
 };
 
 class Grid {
@@ -127,6 +170,7 @@ private:
     std::vector<std::vector<char>> llChar;
     V2 vPosition;
     const int nSize = 20;
+    // PuyoPair xPiece;
 
 public:
     Grid(V2 vPosition) : vPosition(vPosition) {
@@ -150,8 +194,8 @@ public:
         return llChar[y][x] == '.';
     }
 
-    bool placePuyo(const Puyo& puyo) {
-        V2 vP = puyo.getPosition();
+    bool placePuyo(const Puyo& P) {
+        V2 vP = P.getPosition();
 
         if (vP.x < 0 || vP.x >= this->nWidth || vP.y < 0 || vP.y >= this->nHeight) {
             if (DEBUG) std::cout << "Grid.placePuyo: OOB position: " << vP << std::endl;
@@ -160,17 +204,9 @@ public:
             if (DEBUG) std::cout << "Grid.placePuyo: Occupied position: " << vP << std::endl;
             return false;
         }
-        llChar[vP.y][vP.x] = 'R'; // Example: Place a red Puyo
+        // llChar[vP.y][vP.x] = charToColor();
+        llChar[vP.y/nSize][vP.x/nSize] = P.getColor();
         return true;
-    }
-
-    Color charToColor(const char C) const {
-        std::unordered_map<char, Color> umColors;
-        umColors['.'] = Color::Gray;
-        umColors['R'] = Color::Red;
-        umColors['G'] = Color::Green;
-        umColors['B'] = Color::Blue;
-        return umColors[C];
     }
 
     void G2DDisplay() const {
@@ -181,7 +217,8 @@ public:
             for (x = 0; x < this->nWidth; ++x) {
                 vPuyoPos = vPosition + V2(this->nSize * x, this->nSize * y);
                 // G2D::drawRectangle(vPuyoPos, vSize, drawPuyo(llChar[y][x]), true);
-                Puyo P(V2(x, y), charToColor(llChar[x][y]));
+                // Puyo P(V2(x, y), charToColor(llChar[x][y]));
+                Puyo P(V2(x, y), llChar[x][y]);
                 P.render();
                 G2D::drawRectangle(vPuyoPos, vSize, Color::White, false);
             }
@@ -189,33 +226,7 @@ public:
     }
 };
 
-class PlayedPiece {
-private:
-    Puyo xPuyoOne;
-    Puyo xPuyoTwo;
-    int nRotationState; // Could be an angle or an index
 
-public:
-    PlayedPiece(V2 vPos1, V2 vPos2, Color c1, Color c2)
-    : xPuyoOne(vPos1, c1), xPuyoTwo(vPos2, c2), nRotationState(0) {}
-
-    void rotate() {
-        nRotationState = (nRotationState+1)%4;
-
-
-    }
-
-    void move(V2 direction) {
-        // Move both puyos in the specified direction
-        xPuyoOne.setPosition(xPuyoOne.getPosition() + direction);
-        xPuyoTwo.setPosition(xPuyoTwo.getPosition() + direction);
-    }
-
-    void render() const {
-        xPuyoOne.render();
-        xPuyoTwo.render();
-    }
-};
 
 enum /*class*/ Direction {
     UP = 0,
