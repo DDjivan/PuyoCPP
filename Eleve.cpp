@@ -146,8 +146,8 @@ private:
     int nRotationState;
 
 public:
-    PuyoPair(V2 vPos1, char c1, char c2)
-    : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0,20), c2), nRotationState(0) {}
+    PuyoPair(V2 vPos1, char c1, char c2, int nPuyoSize)
+    : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0, nPuyoSize), c2), nRotationState(0) {}
 
     void rotateClockwise() {
         nRotationState = (nRotationState+1)%4;
@@ -158,11 +158,11 @@ public:
         xPuyoTwo.setPosition(xPuyoTwo.getPosition() +vDirection);
     }
 
-    void render(V2 vSize) const {
+    void render(V2 vPuyoSize) const {
 
 
-        xPuyoOne.render(vSize);
-        xPuyoTwo.render(vSize);
+        xPuyoOne.render(vPuyoSize);
+        xPuyoTwo.render(vPuyoSize);
     }
 };
 
@@ -177,13 +177,13 @@ private:
     PuyoPair xPiece;
 
     PuyoPair initialPiece() {
-        return PuyoPair(V2(nPuyoSize*3, nPuyoSize*3), 'B', 'R');
+        return PuyoPair(V2(nPuyoSize*nHeight, nPuyoSize*3), 'B', 'R', nPuyoSize);
     }
 
 public:
     Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
         llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
-        V2 vPieceStart = V2(nPuyoSize*nHeight, nPuyoSize*3);
+        // V2 vPieceStart = V2(nPuyoSize*nHeight, nPuyoSize*3);
         // xPiece = PuyoPair(vPieceStart, 'B', 'R');
     }
 
