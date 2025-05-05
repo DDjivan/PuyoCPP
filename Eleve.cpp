@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------*/
 /*                      PROJET DJIVAN                             */
 /*----------------------------------------------------------------*/
-#define DEBUG 1
+#define DEBUG 0
 #include "Eleve.h"
 
 #pragma warning( disable : 4996 )
@@ -89,10 +89,10 @@ public:
         this->addAngleDeg(fAngleToAdd*(180.0f/M_PI));
     }
 
-    void renderPosition(const V2& vPosition, const V2& vCoordinates, bool bSelectCondition) const {
+    void renderShowCoords(const V2& vPosition, const V2& vCoordinates, bool bSelectCondition) const {
         G2D::drawStringFontMono(vPosition,
                                 std::string(vCoordinates), 16, 2,
-                                bSelectCondition ? Color::Red : Color::Black);
+                                bSelectCondition ? Color::Red : Color::White);
     }
 
     void render(const V2& vPosition, bool bSelectCondition) const {
@@ -132,9 +132,29 @@ public:
         return umColors[cColor];
     }
 
+    std::string charToString() const {
+        std::unordered_map<char, std::string> umTexels;
+        umTexels['B'] = std::string("Sprites/M/goober_idle_04.png");
+        umTexels['R'] = std::string("Sprites/P/g_P_idle.png"      );
+        umTexels['G'] = std::string("Sprites/G/g_G_idle.png"      );
+        umTexels['O'] = std::string("Sprites/O/g_O_idle.png"      );
+
+        return umTexels[cColor];
+    }
+
     void render(V2 vSize) const {
-        Color C = charToColor();
-        G2D::drawRectangle(vPosition, vSize, C, true);
+        if (cColor == '.') {
+            return;
+        }
+        // Color C = charToColor();
+        // G2D::drawRectangle(vPosition, vSize, C, true);
+
+
+
+        std::string S = charToString();
+        Image2 iPuyo = Image2(S, V2(0, 32), Transparency::BottomLeft, V2(32,32));
+        iPuyo.render(vPosition);
+
     }
 
     V2 getPosition() { return vPosition; }
@@ -208,7 +228,7 @@ private:
     const int nHeight = 12;
     std::vector<std::vector<char>> llChar;
     V2 vGridPosition;
-    const int nPuyoSize = 40;
+    const int nPuyoSize = 32;
     const V2 vPuyoSize = V2(nPuyoSize, nPuyoSize);
 
 
@@ -217,10 +237,13 @@ public:
 
     PuyoPair initialPiece() {
         V2 vLocation = vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3));
-        std::vector<char> lColors({'R', 'G', 'B'});
+        // std::vector<char> lColors({'R', 'G', 'B'});
+        std::vector<char> lColors({'R', 'G', 'B', 'O'});
         char C1, C2;
-        C1 = lColors[std::rand() % 3];
-        C2 = lColors[std::rand() % 3];
+        // C1 = lColors[std::rand() % 3];
+        // C2 = lColors[std::rand() % 3];
+        C1 = lColors[std::rand() % 4];
+        C2 = lColors[std::rand() % 4];
         return PuyoPair(vLocation, C1, C2, nPuyoSize);
     }
 
@@ -382,6 +405,9 @@ public:
     }
 
     void G2DDisplay() const {
+        Image2 iWallpaper = Image2("Sprites/W/New_Piskel-1x2.png", V2(0, 384), Transparency::None, V2(192, 384));
+        iWallpaper.render(vGridPosition);
+
         int x, y;
         V2 vPuyoPos;
         for (y = 0; y < this->nHeight; ++y) {
@@ -428,6 +454,7 @@ public:
                 if (DEBUG) std::cout << "Key pressed: " << P.first << std::endl;
 
                 for (Grid& G : lGrids) {
+                    G.movePuyosDownIfEmpty();
                     switch (P.first) {
                         case UP:
                             G.movePiece(V2(0, +G.getPuyoSize()));
@@ -491,6 +518,7 @@ public:
         if (xPlayer.lGrids.empty()) { return; }
 
         for (Grid& G : xPlayer.lGrids) {
+
             // if (!G.movePiece(V2(0, -G.getPuyoSize()))) {
                 // If the move down was not successful, check if it has reached the floor
                 if (G.hasReachedFloor()) {
@@ -498,7 +526,7 @@ public:
                     V2 vPuyoOne = G.placePuyo(G.xPiece.xPuyoOne);
                     V2 vPuyoTwo = G.placePuyo(G.xPiece.xPuyoTwo);
 
-                    G.movePuyosDownIfEmpty();
+
 
                     G.checkConnectedPuyos();
 
@@ -545,7 +573,8 @@ void render(const GameData& G)
         return;
     }
 
-    G2D::clearScreen(Color::White);
+    // G2D::clearScreen(Color::White);
+    G2D::clearScreen(ColorFromHex(0x37383E));// #37383E
 
     int x, y;
     G2D::getMousePos(x, y);
@@ -553,11 +582,14 @@ void render(const GameData& G)
 
     G.render();
 
-    G2D::drawStringFontMono(V2(80 +4, G.nHeight -70 -4), std::string("test"), 50, 5, ColorFrom255(178, 178, 178));
-    G2D::drawStringFontMono(V2(80, G.nHeight - 70), std::string("test"), 50, 5, Color::Black);
+    // G2D::drawStringFontMono(V2(80 +4, G.nHeight -70 -4), std::string("test"), 50, 5, ColorFrom255(178, 178, 178));
+    // G2D::drawStringFontMono(V2(80, G.nHeight - 70), std::string("test"), 50, 5, Color::Black);
+    std::string sTitle = "Triple Unfinished cppPuyo";
+    G2D::drawStringFontMono(V2(80 +4, G.nHeight -120 -4), sTitle, 64, 4, ColorFromHex(0xb2b3b6));  // #b2b3b6
+    G2D::drawStringFontMono(V2(80   , G.nHeight -120   ), sTitle, 64, 4, ColorFromHex(0xFAFAFA));  // #FAFAFA
 
     G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
-    G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
+    G.lCursors[0].renderShowCoords(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
 
     G2D::Show();
 }
@@ -630,7 +662,7 @@ int main(int argc, char* argv[])
 
     G1.addCursor(cursorA);
 
-    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("test1"), std::string("le test1"));
+    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("Triple Unfinished C++Puyo"), std::string("à quoi sert cet argument"));
 
     int callToLogicPerSec = 240*nSpeed;
     if (DEBUG) std::cout <<"callToLogicPerSec: " <<callToLogicPerSec <<" \n";
