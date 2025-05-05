@@ -18,7 +18,7 @@ struct V2
 		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
 	}
 
-	bool isInside(const V2 vRectStart, const V2 vRectSize) const {
+	bool isInside(const V2 vRectStart, const V2 vRectSize) const {  // NOTE: unused
 		return (
 			x >= vRectStart.x
 			&& x <= vRectStart.x + vRectSize.x

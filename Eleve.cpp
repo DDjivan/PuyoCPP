@@ -33,7 +33,6 @@ public:
            V2 vSize = V2(96, 96),
            float alpha = 0.0f) :
         sFilePath(sPath), vImageAnchor(vAnchor), T(T), vImageSize(vSize), fAngle(alpha) {
-
     }
 
     void setSize(const V2& vNewSize) {
@@ -105,7 +104,7 @@ public:
     }
 };
 
-enum PuyoState {
+enum PuyoState {  // TODO: not implemented yet, only IDLE sprites are used
     IDLE = 0,
     FALLING = 1,
     DISAPPEARING = 2,
@@ -124,7 +123,7 @@ public:
 
     Color charToColor() const {
         std::unordered_map<char, Color> umColors;
-        umColors['.'] = ColorFromHex(0xc8c8c8); // #c8c8c8;
+        umColors['.'] = ColorFromHex(0xc8c8c8);  // #c8c8c8;
         umColors['R'] = Color::Red;
         umColors['G'] = Color::Green;
         umColors['B'] = Color::Blue;
@@ -149,8 +148,6 @@ public:
         // Color C = charToColor();
         // G2D::drawRectangle(vPosition, vSize, C, true);
 
-
-
         std::string S = charToString();
         Image2 iPuyo = Image2(S, V2(0, 32), Transparency::BottomLeft, V2(32,32));
         iPuyo.render(vPosition);
@@ -171,9 +168,10 @@ public:
 
 class PuyoPair {
 private:
+    /// TODO: not implemented yet, manual movement needed
     int nFloatSpeed;
     int nFloatTime;
-
+    ///
 public:
     Puyo xPuyoOne;
     Puyo xPuyoTwo;
@@ -185,7 +183,6 @@ public:
         V2( 0, -1),
         V2(-1,  0)
     };
-
 
     PuyoPair(V2 vPos1, char c1, char c2, int nPuyoSize)
     : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0, nPuyoSize), c2), nRotationState(0) {}
@@ -218,7 +215,7 @@ public:
 
 struct V2Hash {
     std::size_t operator()(const V2& v) const {
-        return std::hash<int>()(v.x) ^ std::hash<int>()(v.y); // Combine the hashes of x and y
+        return std::hash<int>()(v.x) ^ std::hash<int>()(v.y);  // combine the hashes of x and y
     }
 };
 
@@ -391,10 +388,9 @@ public:
         }
     }
 
-
     // ---
 
-    void coutDisplay() const {
+    void coutDisplay() const {  // NOTE: only for debugging purposes
         int x,y;
         for (y=0; y < this->nHeight; ++y) {
             for (x=0; x < this->nWidth; ++x) {
@@ -520,22 +516,15 @@ public:
         for (Grid& G : xPlayer.lGrids) {
 
             // if (!G.movePiece(V2(0, -G.getPuyoSize()))) {
-                // If the move down was not successful, check if it has reached the floor
                 if (G.hasReachedFloor()) {
-                    // Add the Puyos to the grid
                     V2 vPuyoOne = G.placePuyo(G.xPiece.xPuyoOne);
                     V2 vPuyoTwo = G.placePuyo(G.xPiece.xPuyoTwo);
 
-
-
                     G.checkConnectedPuyos();
 
-
-
-                    // Create a new PuyoPair for the next piece
-                    G.xPiece = G.initialPiece(); // Create a new piece
-                // }
-            }
+                    G.xPiece = G.initialPiece();  // next new piece
+                }
+            // }
         }
     }
 
@@ -662,7 +651,10 @@ int main(int argc, char* argv[])
 
     G1.addCursor(cursorA);
 
-    G2D::initWindow(V2(G1.nWidth, G1.nHeight), V2(200, 100), std::string("Triple Unfinished C++Puyo"), std::string("à quoi sert cet argument"));
+    G2D::initWindow(
+        V2(G1.nWidth, G1.nHeight), V2(200, 100),
+        std::string("Triple Unfinished C++Puyo"), std::string("je ne sais pas à quoi sert cet argument")
+    );
 
     int callToLogicPerSec = 240*nSpeed;
     if (DEBUG) std::cout <<"callToLogicPerSec: " <<callToLogicPerSec <<" \n";
