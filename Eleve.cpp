@@ -16,6 +16,7 @@
 #include <cmath>  // M_PI
 #include <cstdlib>  // std::rand and std::srand
 #include <ctime>  // std::time
+#include <unordered_set>  // std::std::unordered_set
 
 class Image2 {
 private:
@@ -104,13 +105,22 @@ public:
     }
 };
 
+enum PuyoState {
+    IDLE = 0,
+    FALLING = 1,
+    DISAPPEARING = 2,
+    FLOATING = 3
+};
+
 class Puyo {
 private:
     V2 vPosition;
     char cColor;// = '.';
+    int nState;  // PuyoState
 
 public:
-    Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
+    Puyo(V2 P, char C) : vPosition(P), cColor(C), nState(IDLE) {}
+    Puyo(V2 P, char C, int S) : vPosition(P), cColor(C), nState(S) {}
 
     Color charToColor() const {
         std::unordered_map<char, Color> umColors;
@@ -141,12 +151,14 @@ public:
 
 class PuyoPair {
 private:
-
+    int nFloatSpeed;
+    int nFloatTime;
 
 public:
     Puyo xPuyoOne;
     Puyo xPuyoTwo;
     int nRotationState;
+
     std::vector<V2> lRotations = {
         V2( 0,  1),
         V2( 1,  0),
@@ -176,9 +188,17 @@ public:
         xPuyoTwo.addPosition(nSize*lRotations[nRotationState]);
     }
 
+    // void addToGrid
+
     void render(V2 vPuyoSize) const {
         xPuyoOne.render(vPuyoSize);
         xPuyoTwo.render(vPuyoSize);
+    }
+};
+
+struct V2Hash {
+    std::size_t operator()(const V2& v) const {
+        return std::hash<int>()(v.x) ^ std::hash<int>()(v.y); // Combine the hashes of x and y
     }
 };
 
@@ -190,18 +210,21 @@ private:
     V2 vGridPosition;
     const int nPuyoSize = 40;
     const V2 vPuyoSize = V2(nPuyoSize, nPuyoSize);
+
+
+public:
     PuyoPair xPiece;
 
     PuyoPair initialPiece() {
         V2 vLocation = vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3));
-        char C1, C2;
         std::vector<char> lColors({'R', 'G', 'B'});
+        char C1, C2;
         C1 = lColors[std::rand() % 3];
         C2 = lColors[std::rand() % 3];
         return PuyoPair(vLocation, C1, C2, nPuyoSize);
     }
 
-public:
+
     Grid(V2 P) : vGridPosition(P), xPiece(initialPiece()) {
         llChar.resize(nHeight, std::vector<char>(nWidth, '.'));
     }
@@ -224,19 +247,21 @@ public:
         return (llChar[vP2.y][vP2.x] == '.');
     }
 
-    bool placePuyo(Puyo P) {  // unused yet
+    V2 placePuyo(Puyo P) {
         V2 vP = P.getPosition();
 
-        if (vP.x < 0 || vP.x >= this->nWidth || vP.y < 0 || vP.y >= this->nHeight) {
+        V2 vP2 = (vP - vGridPosition)/nPuyoSize;
+
+        if (vP2.x < 0 || vP2.x >= this->nWidth || vP2.y < 0 || vP2.y >= this->nHeight) {
             if (DEBUG) std::cout << "Grid.placePuyo: OOB position: " << vP << std::endl;
-            return false;
-        } else if (llChar[vP.y][vP.x] != '.') {
+            // return;
+        } else if (llChar[vP2.y][vP2.x] != '.') {
             if (DEBUG) std::cout << "Grid.placePuyo: Occupied position: " << vP << std::endl;
-            return false;
+            // return;
         }
 
-        llChar[vP.y/nPuyoSize][vP.x/nPuyoSize] = P.getColor();
-        return true;
+        llChar[vP2.y][vP2.x] = P.getColor();
+        return vP2;
     }
 
     bool movePiece(V2 vDirection) {
@@ -271,10 +296,80 @@ public:
         return false;
     }
 
+    bool hasReachedFloor() {
+        V2 pos1 = xPiece.xPuyoOne.getPosition();
+        V2 pos2 = xPiece.xPuyoTwo.getPosition();
+
+        // Check if either Puyo is at the bottom of the grid
+        if (pos1.y <= vGridPosition.y || pos2.y <= vGridPosition.y) {
+            return true;
+        }
+
+        // Check if either Puyo is resting on another Puyo
+        if (!isPositionValid(pos1 + V2(0, -nPuyoSize)) ||
+            !isPositionValid(pos2 + V2(0, -nPuyoSize))) {
+            return true;
+            }
+
+        return false;
+    }
+
+    void movePuyosDownIfEmpty() {
+        for (int x = 0; x < nWidth; ++x) {
+            for (int y = 1; y < nHeight - 1; ++y) {  // dont check bottom row
+                if (llChar[y][x] != '.') {
+                    if (llChar[y - 1][x] == '.') {  // if spot below is empty
+                        // Move the Puyo down
+                        llChar[y - 1][x] = llChar[y][x];  // move down
+                        llChar[y][x] = '.';  // clear up
+                    }
+                }
+            }
+        }
+    }
+
+    int findConnectedPuyos(char C, int x, int y, std::unordered_set<V2, V2Hash>& connectedPuyos) {
+        if (x < 0 || x > nWidth -1 || y < 0 || y > nHeight -1) {
+            return 0;
+        }
+
+        // if current position is empty or already visited
+        if (llChar[y][x] != C || connectedPuyos.count(V2(x, y))) {
+            return 0;
+        }
+
+        connectedPuyos.insert(V2(x, y));
+
+        int nU = findConnectedPuyos(C, x   , y +1, connectedPuyos); // Up
+        int nD = findConnectedPuyos(C, x   , y -1, connectedPuyos); // Down
+        int nL = findConnectedPuyos(C, x -1, y   , connectedPuyos); // Left
+        int nR = findConnectedPuyos(C, x +1, y   , connectedPuyos); // Right
+
+        return 1 +nU +nD +nL +nR;
+    }
+
+    void checkConnectedPuyos() {
+        for (int x = 0; x < nWidth; ++x) {
+            for (int y = 1; y < nHeight - 1; ++y) {  // dont check bottom row
+                if (llChar[y][x] == '.') {
+                    continue;
+                }
+                std::unordered_set<V2, V2Hash> lConnectedPuyos;
+                int nAmount = findConnectedPuyos(llChar[y][x], x, y, lConnectedPuyos);
+
+                if (nAmount < 4) {
+                    continue;
+                }
+
+                for (V2 P : lConnectedPuyos) {
+                    llChar[P.y][P.x] = '.';
+                }
+            }
+        }
+    }
 
 
-
-
+    // ---
 
     void coutDisplay() const {
         int x,y;
@@ -381,7 +476,6 @@ public:
     int nScore;
     Player xPlayer;
     std::vector<Cursor> lCursors;
-    // std::vector<Grid> lGrids;
 
     GameData(const int ID, Player P)
     : nID(ID), nFrame(0), nWidth(1280), nHeight(720), nScore(0), xPlayer(P) {
@@ -391,6 +485,30 @@ public:
 
     void addCursor(Cursor C) {
         this->lCursors.push_back(C);
+    }
+
+    void logic() {
+        if (xPlayer.lGrids.empty()) { return; }
+
+        for (Grid& G : xPlayer.lGrids) {
+            // if (!G.movePiece(V2(0, -G.getPuyoSize()))) {
+                // If the move down was not successful, check if it has reached the floor
+                if (G.hasReachedFloor()) {
+                    // Add the Puyos to the grid
+                    V2 vPuyoOne = G.placePuyo(G.xPiece.xPuyoOne);
+                    V2 vPuyoTwo = G.placePuyo(G.xPiece.xPuyoTwo);
+
+                    G.movePuyosDownIfEmpty();
+
+                    G.checkConnectedPuyos();
+
+
+
+                    // Create a new PuyoPair for the next piece
+                    G.xPiece = G.initialPiece(); // Create a new piece
+                // }
+            }
+        }
     }
 
     void render() const {
@@ -408,11 +526,6 @@ void Logic(GameData& G);
 
 //  P  : mets en pause
 // ESC : ferme la fenêtre et quitte le jeu
-
-/*----------------------------------------------------------------*/
-void GameData::function1(const int nValue) {
-    std::cout <<"GameData" <<nID <<": function1(" <<nValue <<") speaking here." <<" \n";
-}
 
 /*----------------------------------------------------------------*/
 void render(const GameData& G)
@@ -440,16 +553,8 @@ void render(const GameData& G)
 
     G.render();
 
-
-
-
-
-
     G2D::drawStringFontMono(V2(80 +4, G.nHeight -70 -4), std::string("test"), 50, 5, ColorFrom255(178, 178, 178));
     G2D::drawStringFontMono(V2(80, G.nHeight - 70), std::string("test"), 50, 5, Color::Black);
-
-
-
 
     G.lCursors[0].render(vMousePos, G2D::isMouseLeftButtonPressed());
     G.lCursors[0].renderPosition(V2(0, 00), vMousePos, G2D::isMouseLeftButtonPressed());
@@ -468,13 +573,6 @@ void Logic(GameData& G)
         return;
     }
 
-    if (G2D::isKeyPressed(Key::A)) {
-        G.GameData::function1(70);
-    }
-    if (G2D::keyHasBeenHit(Key::B)) {
-        G.GameData::function1(55);
-    }
-
     if (G2D::isKeyPressed(Key::Z)) {
         G.lCursors[0].addAngleRad(M_PI/180.0f);
     }
@@ -484,10 +582,7 @@ void Logic(GameData& G)
 
     G.xPlayer.sendInput();
 
-
-
-    // G.gGrid.vPosition = G.gGrid.vPosition + V2(1, 0);
-    // G.gGrid.moveGrid(V2(1, 0));
+    G.logic();
 
 
 
@@ -506,11 +601,7 @@ int main(int argc, char* argv[])
     } else if (argc == 1) {
         nSpeed = 1;
     } else {
-        // nSpeed = atoi(argv[1]);
-        // nSpeed = std::stoi(argv[1]);
         double argv1 = std::stod(argv[1]);
-
-
         nSpeed = argv1;
     }
 
@@ -548,4 +639,3 @@ int main(int argc, char* argv[])
     std::cout <<"\n";
     return 0;
 }
-
