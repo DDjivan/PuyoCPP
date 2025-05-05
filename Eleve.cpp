@@ -14,6 +14,8 @@
 // #include <map>
 #include <unordered_map>
 #include <cmath>  // M_PI
+#include <cstdlib>  // std::rand and std::srand
+#include <ctime>  // std::time
 
 class Image2 {
 private:
@@ -104,11 +106,10 @@ public:
 
 class Puyo {
 private:
-
-public:
     V2 vPosition;
     char cColor;// = '.';
 
+public:
     Puyo(V2 P, char C) : vPosition(P), cColor(C) {}
 
     Color charToColor() const {
@@ -170,7 +171,7 @@ public:
 
     void movePuyoTwo(int nRotation, int nSize) {
         nRotationState = (nRotationState +nRotation +4)%4;
-        if (DEBUG) std::cout <<"PuyoPair.movePuyoTwo: nRotation=" <<nRotation <<", nRotationState=" <<nRotationState <<" \n";
+        // if (DEBUG) std::cout <<"PuyoPair.movePuyoTwo: nRotation=" <<nRotation <<", nRotationState=" <<nRotationState <<" \n";
         xPuyoTwo.setPosition(xPuyoOne.getPosition());
         xPuyoTwo.addPosition(nSize*lRotations[nRotationState]);
     }
@@ -193,7 +194,11 @@ private:
 
     PuyoPair initialPiece() {
         V2 vLocation = vGridPosition +V2(nPuyoSize*3, nPuyoSize*(nHeight-3));
-        return PuyoPair(vLocation, 'B', 'R', nPuyoSize);
+        char C1, C2;
+        std::vector<char> lColors({'R', 'G', 'B'});
+        C1 = lColors[std::rand() % 3];
+        C2 = lColors[std::rand() % 3];
+        return PuyoPair(vLocation, C1, C2, nPuyoSize);
     }
 
 public:
