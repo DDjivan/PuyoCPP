@@ -146,13 +146,16 @@ public:
     Puyo xPuyoOne;
     Puyo xPuyoTwo;
     int nRotationState;
+    std::vector<V2> lRotations = {
+        V2( 0,  1),
+        V2( 1,  0),
+        V2( 0, -1),
+        V2(-1,  0)
+    };
+
 
     PuyoPair(V2 vPos1, char c1, char c2, int nPuyoSize)
     : xPuyoOne(vPos1, c1), xPuyoTwo(vPos1 +V2(0, nPuyoSize), c2), nRotationState(0) {}
-
-    void rotateClockwise() {
-        nRotationState = (nRotationState+1)%4;
-    }
 
     void move(V2 vDirection) {
         // if (DEBUG) {
@@ -163,6 +166,13 @@ public:
         // }
         xPuyoOne.addPosition(vDirection);
         xPuyoTwo.addPosition(vDirection);
+    }
+
+    void movePuyoTwo(int nRotation, int nSize) {
+        nRotationState = (nRotationState +nRotation +4)%4;
+        if (DEBUG) std::cout <<"PuyoPair.movePuyoTwo: nRotation=" <<nRotation <<", nRotationState=" <<nRotationState <<" \n";
+        xPuyoTwo.setPosition(xPuyoOne.getPosition());
+        xPuyoTwo.addPosition(nSize*lRotations[nRotationState]);
     }
 
     void render(V2 vPuyoSize) const {
@@ -240,6 +250,24 @@ public:
         return false;
     }
 
+    bool rotatePiece(int nRotation) {
+        V2 vAddition = nPuyoSize*xPiece.lRotations[(xPiece.nRotationState +nRotation +4)%4];
+
+        V2 pos1 = xPiece.xPuyoOne.getPosition();
+        // V2 pos2 = xPiece.xPuyoTwo.getPosition();
+
+        V2 newPos2 = pos1 +vAddition;
+
+        if (isPositionValid(newPos2)) {
+            xPiece.movePuyoTwo(nRotation, nPuyoSize);
+            return true;
+        }
+
+        return false;
+    }
+
+
+
 
 
 
@@ -275,8 +303,8 @@ enum /*class*/ Direction {
     DOWN = 1,
     RIGHT = 2,
     LEFT = 3,
-    OK = 4,
-    NO = 5,
+    CLOCKWISE = 4,
+    COUNTERCW = 5,
 };
 
 class Player {
@@ -302,7 +330,6 @@ public:
                 for (Grid& G : lGrids) {
                     switch (P.first) {
                         case UP:
-                            // G.xPiece.rotateClockwise();
                             G.movePiece(V2(0, +G.getPuyoSize()));
                             break;
                         case DOWN:
@@ -314,9 +341,13 @@ public:
                         case RIGHT:
                             G.movePiece(V2(G.getPuyoSize(), 0));
                             break;
-                        case OK:
+                        case CLOCKWISE:
+                            // G.xPiece.rotateClockwise();
+                            // G.rotatePiece(V2(+G.getPuyoSize(), 0));
+                            G.rotatePiece( 1);
                             break;
-                        case NO:
+                        case COUNTERCW:
+                            G.rotatePiece(-1);
                             break;
                         default:
                             break;
@@ -479,19 +510,21 @@ int main(int argc, char* argv[])
     }
 
     Grid grid001 = Grid(V2(110, 140));
-    Grid grid002 = Grid(V2(410, 140));
+    Grid grid002 = Grid(V2(510, 140));
+    Grid grid00さん = Grid(V2(910, 140));
 
     Player P1 = Player();
     P1.addGrid(grid001);
     P1.addGrid(grid002);
+    P1.addGrid(grid00さん);
 
     std::unordered_map<int, Key> keyMap;
     keyMap[UP] = Key::E;
     keyMap[LEFT] = Key::S;
     keyMap[DOWN] = Key::D;
     keyMap[RIGHT] = Key::F;
-    keyMap[OK] = Key::J;
-    keyMap[NO] = Key::K;
+    keyMap[CLOCKWISE] = Key::L;
+    keyMap[COUNTERCW] = Key::J;
     P1.setKeys(keyMap);
 
 
